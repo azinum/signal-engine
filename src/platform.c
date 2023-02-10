@@ -96,6 +96,8 @@ static const i32 KEY_MAP_SIZE = (sizeof(key_map) / sizeof(key_map[0]));
 
 u8 key_down[KEY_MAP_SIZE] = {0};
 u8 key_pressed[KEY_MAP_SIZE] = {0};
+i32 mouse_x = 0;
+i32 mouse_y = 0;
 
 static SDL_Window* sdl_window = NULL;
 static SDL_Renderer* sdl_renderer = NULL;
@@ -204,6 +206,10 @@ Result platform_pollevents() {
           key_pressed[mapped_code] = false;
           key_down[mapped_code] = false;
         }
+        break;
+      }
+      case SDL_MOUSEMOTION: {
+        SDL_GetMouseState(&mouse_x, &mouse_y);
         break;
       }
       default:

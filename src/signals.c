@@ -6,6 +6,7 @@
 #include "common.c"
 #include "platform.c"
 #include "renderer.c"
+#include "node.c"
 
 #define MAX_TITLE_LENGTH 64
 #define PROG_NAME "Signals"
@@ -21,7 +22,18 @@ i32 signals_start(i32 argc, char** argv) {
   const f32 DT_MAX = 0.5f;
   char title[MAX_TITLE_LENGTH] = {0};
 
-  if (platform_window_create("Signals", 800, 600) == Ok) {
+  {
+    Node node;
+    node_init(&node, BOX(16, 16, 32, 32), NODE_PULSE);
+    node_push(&state, &node);
+  }
+  {
+    Node node;
+    node_init(&node, BOX(52, 16, 32, 32), NODE_PULSE);
+    node_push(&state, &node);
+  }
+
+  if (platform_window_create("", 800, 600) == Ok) {
       u32 prev = platform_get_ticks();
       u32 current = prev;
 
@@ -40,6 +52,7 @@ i32 signals_start(i32 argc, char** argv) {
           snprintf(title, MAX_TITLE_LENGTH, "%s | %d fps | %.3g delta", PROG_NAME, (u32)(1.0f / state.dt), state.dt);
           platform_set_title(title);
         }
+        nodes_update_and_render(&state);
         platform_window_render();
         state.tick++;
       }
@@ -51,4 +64,6 @@ i32 signals_start(i32 argc, char** argv) {
 void state_init(State* state) {
   state->dt = 0.0f;
   state->total_time = 0.0f;
+  state->node_count = 0;
+  state->id = 0;
 }

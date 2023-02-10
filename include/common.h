@@ -38,6 +38,15 @@ typedef struct {
   u32 size;
 } Buffer;
 
+typedef struct {
+  u32 x;
+  u32 y;
+  u32 w;
+  u32 h;
+} Box;
+
+#define BOX(X, Y, W, H) (Box) { .x = X, .y = Y, .w = W, .h = H, }
+
 void buffer_init(Buffer* buffer);
 
 void buffer_init_new(Buffer* buffer, u32 size);
@@ -53,5 +62,7 @@ Result file_write(const char* path, Buffer* buffer);
 void log_error(const char* format, ...);
 
 f32 lerp_f32(f32 v0, f32 v1, f32 t);
+
+u32 inside_box(const Box* box, u32 x, u32 y);
 
 #endif // _COMMON_H

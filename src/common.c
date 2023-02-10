@@ -98,3 +98,9 @@ void log_error(const char* format, ...) {
 inline f32 lerp_f32(f32 v0, f32 v1, f32 t) {
   return (1.0f - t) * v0 + t * v1;
 }
+
+u32 inside_box(const Box* box, u32 x, u32 y) {
+  return
+    (x >= box->x && x <= box->x + box->w) &&
+    (y >= box->y && y <= box->y + box->h);
+}

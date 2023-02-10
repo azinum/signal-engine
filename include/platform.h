@@ -52,6 +52,8 @@ typedef enum {
 
 extern u8 key_down[];
 extern u8 key_pressed[];
+extern i32 mouse_x;
+extern i32 mouse_y;
 
 Result platform_window_create(char* title, u32 width, u32 height);
 
