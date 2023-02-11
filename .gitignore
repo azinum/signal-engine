@@ -1,5 +1,6 @@
 *.swo
 *.swp
+*.bin
 .DS_Store
 signals
-*.bin
+png2c

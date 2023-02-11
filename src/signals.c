@@ -22,7 +22,7 @@ void signal_engine_render_state_info(State* state) {
   u32 height = 0;
   platform_window_size(&width, &height);
   const u32 PADDING = DEFAULT_PADDING;
-  render_text_format(PADDING, height - (2 * 20), 2, color_white, "status: %s", paused_str[state->paused == true]);
+  render_text_format(PADDING, height - (1 * 20), 2, color_white, "status: %s", paused_str[state->paused == true]);
 }
 
 void signal_state_init(State* state) {

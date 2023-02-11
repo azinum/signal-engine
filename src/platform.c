@@ -315,5 +315,6 @@ void platform_destroy() {
   SDL_DestroyWindow(sdl_window);
   SDL_DestroyRenderer(sdl_renderer);
   SDL_DestroyTexture(framebuffer);
+  SDL_Quit();
   renderer_destroy();
 }

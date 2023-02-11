@@ -4,12 +4,13 @@
 #define _SIGNALS_H
 
 #include "common.h"
+#include "assets.h"
 #include "platform.h"
 #include "renderer.h"
 #include "node.h"
 
 #define NODE_GRID_WIDTH 28
-#define NODE_GRID_HEIGHT 25
+#define NODE_GRID_HEIGHT 26
 #define MAX_NODE (NODE_GRID_WIDTH * NODE_GRID_HEIGHT)
 
 #define DEFAULT_PADDING 2
