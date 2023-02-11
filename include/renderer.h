@@ -3,8 +3,21 @@
 #ifndef _RENDERER_H
 #define _RENDERER_H
 
-extern u32 color_white;
-extern u32 color_black;
+extern const u32 color_white;
+extern const u32 color_black;
+
+typedef enum {
+  COLOR_WHITE,
+  COLOR_BLACK,
+  COLOR_RED,
+  COLOR_GREEN,
+  COLOR_BLUE,
+  COLOR_GRAY,
+
+  MAX_COLOR,
+} Color;
+
+extern u32 colors[MAX_COLOR];
 
 Result renderer_init(u32 width, u32 height);
 

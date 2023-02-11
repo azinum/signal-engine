@@ -1,22 +1,84 @@
 // node.c
 
+#define MAX_NEIGHBOUR 4
+
+static Node* node_from_grid_pos(State* state, u32 x, u32 y);
+static Result id_to_grid_pos(Node* node, u32* x, u32* y);
+static void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count);
+
+Node* node_from_grid_pos(State* state, u32 x, u32 y) {
+  Node* result = NULL;
+  u32 index = y * NODE_GRID_WIDTH + x;
+  if (index < MAX_NODE) {
+    result = &state->nodes[index];
+  }
+  return result;
+}
+
+Result id_to_grid_pos(Node* node, u32* x, u32* y) {
+  Result result = Ok;
+  *x = node->id % NODE_GRID_WIDTH;
+  *y = node->id / NODE_GRID_WIDTH;
+  return result;
+}
+
+void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count) {
+  *count = 0;
+  u32 x = 0;
+  u32 y = 0;
+  id_to_grid_pos(node, &x, &y);
+
+  {
+    Node* n = node_from_grid_pos(state, x - 1, y);
+    if (n) {
+      if (n->alive) {
+        neighbours[(*count)++] = n;
+      }
+    }
+  }
+  {
+    Node* n = node_from_grid_pos(state, x + 1, y);
+    if (n) {
+      if (n->alive) {
+        neighbours[(*count)++] = n;
+      }
+    }
+  }
+  {
+    Node* n = node_from_grid_pos(state, x, y - 1);
+    if (n) {
+      if (n->alive) {
+        neighbours[(*count)++] = n;
+      }
+    }
+  }
+  {
+    Node* n = node_from_grid_pos(state, x, y + 1);
+    if (n) {
+      if (n->alive) {
+        neighbours[(*count)++] = n;
+      }
+    }
+  }
+}
+
 void node_init(Node* node, Box box, Node_type type) {
   node->box = box;
   node->type = type;
   memset(&node->data, 0, sizeof(Node_data));
   node->alive = true;
   node->color = color_black;
-  node->target_color = color_rgb(0xf0, 0x22, 0x22);
+  node->target_color = color_black;
 }
 
 void node_grid_init(struct State* state) {
-  const u32 PADDING = 10;
-  const u32 NODE_WIDTH = 26;
-  const u32 NODE_HEIGHT = 26;
+  const u32 PADDING = 2;
+  const u32 NODE_WIDTH = 20;
+  const u32 NODE_HEIGHT = 20;
   for (u32 y = 0; y < NODE_GRID_HEIGHT; ++y) {
     for (u32 x = 0; x < NODE_GRID_WIDTH; ++x) {
       Node* node = &state->nodes[y * NODE_GRID_WIDTH + x];
-      node_init(node, BOX(PADDING + x * (NODE_WIDTH + PADDING), PADDING + y * (NODE_HEIGHT + PADDING), NODE_WIDTH, NODE_HEIGHT), NODE_NONE);
+      node_init(node, BOX(PADDING + x * (NODE_WIDTH + PADDING), PADDING + y * (NODE_HEIGHT + PADDING), NODE_WIDTH, NODE_HEIGHT), NODE_CLOCK);
       node->alive = false;
       node->id = y * NODE_GRID_WIDTH + x;
     }
@@ -58,7 +120,14 @@ void nodes_update_and_render(struct State* state) {
       case NODE_CLOCK: {
         if (beat) {
           node->data.counter++;
-          node->data.counter %= 100;
+          u32 count = 0;
+          Node* neighbours[MAX_NEIGHBOUR] = {NULL};
+          node_get_alive_neighbours(state, node, neighbours, &count);
+          for (u32 i = 0; i < count; ++i) {
+            Node* n = neighbours[i];
+            n->data.counter++;
+            n->color = color_white;
+          }
         }
         break;
       }
@@ -73,25 +142,29 @@ void nodes_update_and_render(struct State* state) {
       render_rect(node->box.x, node->box.y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
       continue;
     }
-    node->color = color_lerp(node->color, node->target_color, state->dt * 32.0f);
+    node->target_color = colors[node_type_color[node->type]];
+    node->color = color_lerp(node->color, node->target_color, state->dt * 20.0f);
     if (inside_box(&node->box, mouse_x, mouse_y)) {
       node->color = color_lerp(node->target_color, color_white, 0.5f);
     }
     render_rect(node->box.x, node->box.y, node->box.w, node->box.h, node->color);
-    render_text_format(node->box.x, node->box.y, 2, color_white, "%d", node->data.counter);
   }
 
-  if (hover) {
-    node_render_info_box(state, hover);
-  }
+  node_render_info_box(state, hover);
 }
 
 void node_render_info_box(struct State* state, Node* node) {
-  const u32 box_w = 200;
-  const u32 box_h = 86;
-  render_rect(mouse_x + 16, mouse_y + 16, box_w, box_h, color_rgb(0xf0, 0xf0, 0xf0));
-  render_text_format(mouse_x + 20, mouse_y + 20 + 0*20, 2, color_black, "id: %d", node->id);
-  render_text_format(mouse_x + 20, mouse_y + 20 + 1*20, 2, color_black, "type: %s", node_type_str[node->type]);
-  render_text_format(mouse_x + 20, mouse_y + 20 + 2*20, 2, color_black, "alive: %d", node->alive);
-  render_text_format(mouse_x + 20, mouse_y + 20 + 3*20, 2, color_black, "counter: %d", node->data.counter);
+  u32 width = 0;
+  u32 height = 0;
+  platform_window_size(&width, &height);
+  u32 x = 618;
+  u32 y = 2;
+  const u32 box_w = width - 620;
+  const u32 box_h = height - 8;
+  render_rect(618, 2, box_w, box_h, color_rgb(0x15, 0x16, 0x20));
+  if (node) {
+    render_text_format(x + 4, y + 4 + 0*20, 2, color_white, "type: %s", node_type_str[node->type], node->id);
+    render_text_format(x + 4, y + 4 + 1*20, 2, color_white, "id: %d", node->id);
+    render_text_format(x + 4, y + 4 + 2*20, 2, color_white, "counter: %d", node->data.counter);
+  }
 }

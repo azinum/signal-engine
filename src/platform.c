@@ -296,6 +296,15 @@ void platform_set_title(char* title) {
   SDL_SetWindowTitle(sdl_window, title);
 }
 
+void platform_window_size(u32* width, u32* height) {
+  if (width) {
+    *width = window.width;
+  }
+  if (height) {
+    *height = window.height;
+  }
+}
+
 void platform_destroy() {
   SDL_DestroyWindow(sdl_window);
   SDL_DestroyRenderer(sdl_renderer);

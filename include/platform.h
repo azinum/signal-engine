@@ -79,6 +79,8 @@ void platform_window_render();
 
 void platform_set_title(char* title);
 
+void platform_window_size(u32* width, u32* height);
+
 void platform_destroy();
 
 #endif // _PLATFORM_H

@@ -8,8 +8,8 @@
 #include "renderer.h"
 #include "node.h"
 
-#define NODE_GRID_WIDTH 16
-#define NODE_GRID_HEIGHT 12
+#define NODE_GRID_WIDTH 28
+#define NODE_GRID_HEIGHT 27
 #define MAX_NODE (NODE_GRID_WIDTH * NODE_GRID_HEIGHT)
 
 #define STATE_PATH "state.bin"

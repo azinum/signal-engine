@@ -4,6 +4,7 @@
 #include "external/olive.c"
 
 #define TEXT_BUFFER_SIZE 512
+#define COLOR_RGB(R, G, B) OLIVEC_RGBA(R, G, B, 255)
 
 struct {
   u32* pixels;
@@ -13,8 +14,17 @@ struct {
   char text_buffer[TEXT_BUFFER_SIZE];
 } renderer;
 
-u32 color_white = OLIVEC_RGBA(0xff, 0xff, 0xff, 0xff);
-u32 color_black = OLIVEC_RGBA(0x00, 0x00, 0x00, 0xff);
+const u32 color_white = OLIVEC_RGBA(0xff, 0xff, 0xff, 0xff);
+const u32 color_black = OLIVEC_RGBA(0x00, 0x00, 0x00, 0xff);
+
+u32 colors[MAX_COLOR] = {
+  COLOR_RGB(0xff, 0xff, 0xff),
+  COLOR_RGB(0x00, 0x00, 0x00),
+  COLOR_RGB(0xf0, 0x22, 0x22),
+  COLOR_RGB(0x55, 0xf0, 0x55),
+  COLOR_RGB(0x55, 0x55, 0xf0),
+  COLOR_RGB(0x75, 0x75, 0x75),
+};
 
 Result renderer_init(u32 width, u32 height) {
   renderer.pixels = calloc(1, sizeof(u32) * width * height);

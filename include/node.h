@@ -5,7 +5,7 @@
 
 typedef enum {
   NODE_NONE = 0,
-  NODE_CLOCK,
+  NODE_CLOCK, // increments an internal counter and sends that counter out the neighbours
 
   MAX_NODE_TYPE,
 } Node_type;
@@ -13,6 +13,11 @@ typedef enum {
 const char* node_type_str[MAX_NODE_TYPE] = {
   [NODE_NONE] = "none",
   [NODE_CLOCK] = "clock",
+};
+
+const u32 node_type_color[MAX_NODE_TYPE] = {
+  COLOR_GRAY,
+  COLOR_RED,
 };
 
 typedef struct {
