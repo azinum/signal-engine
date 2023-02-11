@@ -50,10 +50,22 @@ typedef enum {
   MAX_KEY_EVENT,
 } KeyEvent;
 
+typedef enum {
+  MOUSE_BUTTON_LEFT = 0,
+  MOUSE_BUTTON_RIGHT,
+  MOUSE_BUTTON_MIDDLE,
+
+  MAX_MOUSE_BUTTON,
+} MouseEvent;
+
 extern u8 key_down[];
 extern u8 key_pressed[];
+extern u32 key_mod_ctrl;
+
 extern i32 mouse_x;
 extern i32 mouse_y;
+extern u8 mouse_down[];
+extern u8 mouse_pressed[];
 
 Result platform_window_create(char* title, u32 width, u32 height);
 

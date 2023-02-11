@@ -96,8 +96,12 @@ static const i32 KEY_MAP_SIZE = (sizeof(key_map) / sizeof(key_map[0]));
 
 u8 key_down[KEY_MAP_SIZE] = {0};
 u8 key_pressed[KEY_MAP_SIZE] = {0};
-i32 mouse_x = 0;
-i32 mouse_y = 0;
+u32 key_mod_ctrl = false;
+
+i32 mouse_x = INT32_MAX;
+i32 mouse_y = INT32_MAX;
+u8 mouse_down[MAX_MOUSE_BUTTON] = {0};
+u8 mouse_pressed[MAX_MOUSE_BUTTON] = {0};
 
 static SDL_Window* sdl_window = NULL;
 static SDL_Renderer* sdl_renderer = NULL;
@@ -183,6 +187,10 @@ u32 platform_get_ticks() {
 Result platform_pollevents() {
   Result result = Ok;
   memset(&key_pressed[0], 0, sizeof(key_pressed));
+  memset(&mouse_pressed[0], 0, sizeof(mouse_pressed));
+
+  SDL_Keymod key_mod = SDL_GetModState();
+  key_mod_ctrl = (key_mod & KMOD_LCTRL) == KMOD_LCTRL;
 
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -210,6 +218,37 @@ Result platform_pollevents() {
       }
       case SDL_MOUSEMOTION: {
         SDL_GetMouseState(&mouse_x, &mouse_y);
+        break;
+      }
+      case SDL_MOUSEBUTTONDOWN: {
+        u8 code = event.button.button;
+        switch (code) {
+          case SDL_BUTTON_LEFT:
+            mouse_pressed[MOUSE_BUTTON_LEFT] = !mouse_down[MOUSE_BUTTON_LEFT];
+            mouse_down[MOUSE_BUTTON_LEFT] = true;
+            break;
+          case SDL_BUTTON_MIDDLE:
+            break;
+          case SDL_BUTTON_RIGHT:
+            break;
+          default:
+            break;
+        }
+        break;
+      }
+      case SDL_MOUSEBUTTONUP: {
+        u8 code = event.button.button;
+        switch (code) {
+          case SDL_BUTTON_LEFT:
+            mouse_pressed[MOUSE_BUTTON_LEFT] = mouse_down[MOUSE_BUTTON_LEFT] = false;
+            break;
+          case SDL_BUTTON_MIDDLE:
+            break;
+          case SDL_BUTTON_RIGHT:
+            break;
+          default:
+            break;
+        }
         break;
       }
       default:

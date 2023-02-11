@@ -61,6 +61,8 @@ Result file_write(const char* path, Buffer* buffer);
 
 void log_error(const char* format, ...);
 
+void log_info(const char* format, ...);
+
 f32 lerp_f32(f32 v0, f32 v1, f32 t);
 
 u32 inside_box(const Box* box, u32 x, u32 y);

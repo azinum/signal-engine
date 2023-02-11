@@ -41,7 +41,7 @@ Result file_read(const char* path, Buffer* buffer) {
 
 	FILE* fp = fopen(path, "rb");
 	if (!fp) {
-		fprintf(stderr, "file_read: file `%s` does not exist.\n", path);
+		log_error("file_read: file `%s` does not exist.\n", path);
     return_defer(Err);
 	}
 
@@ -57,7 +57,7 @@ Result file_read(const char* path, Buffer* buffer) {
 
 	num_bytes_read = fread(buffer->data, 1, size, fp);
 	if (num_bytes_read != size) {
-		fprintf(stderr, "file_read: failed to read file `%s`.\n", path);
+		log_error("file_read: failed to read file `%s`.\n", path);
     return_defer(Err);
 	}
 
@@ -70,17 +70,16 @@ defer:
 
 Result file_write(const char* path, Buffer* buffer) {
   Result result = Ok;
-  buffer_init(buffer);
 
   FILE* fp = fopen(path, "wb");
   if (!fp) {
-    fprintf(stderr, "file_write: failed to open file `%s` for writing.\n", path);
+    log_error("file_write: failed to open file `%s` for writing.\n", path);
     return_defer(Err);
   }
   i32 write_result = fwrite(buffer->data, buffer->size, 1, fp);
   fclose(fp);
   if (write_result != 1) {
-    fprintf(stderr, "file_write: failed to write data to file `%s`.\n", path);
+    log_error("file_write: failed to write data to file `%s`.\n", path);
     return_defer(Err);
   }
 defer:
@@ -92,6 +91,14 @@ void log_error(const char* format, ...) {
   va_list argp;
   va_start(argp, format);
   vfprintf(stderr, format, argp);
+  va_end(argp);
+}
+
+void log_info(const char* format, ...) {
+  fprintf(stdout, "[info]: ");
+  va_list argp;
+  va_start(argp, format);
+  vfprintf(stdout, format, argp);
   va_end(argp);
 }
 
