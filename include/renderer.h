@@ -5,6 +5,7 @@
 
 extern const u32 color_white;
 extern const u32 color_black;
+extern const u32 color_green;
 
 typedef enum {
   COLOR_WHITE,
@@ -13,6 +14,8 @@ typedef enum {
   COLOR_GREEN,
   COLOR_BLUE,
   COLOR_GRAY,
+  COLOR_PURPLE,
+  COLOR_CYAN,
 
   MAX_COLOR,
 } Color;

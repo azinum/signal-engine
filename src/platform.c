@@ -232,8 +232,12 @@ Result platform_pollevents() {
             mouse_down[MOUSE_BUTTON_LEFT] = true;
             break;
           case SDL_BUTTON_MIDDLE:
+            mouse_pressed[MOUSE_BUTTON_MIDDLE] = !mouse_down[MOUSE_BUTTON_MIDDLE];
+            mouse_down[MOUSE_BUTTON_MIDDLE] = true;
             break;
           case SDL_BUTTON_RIGHT:
+            mouse_pressed[MOUSE_BUTTON_RIGHT] = !mouse_down[MOUSE_BUTTON_RIGHT];
+            mouse_down[MOUSE_BUTTON_RIGHT] = true;
             break;
           default:
             break;
@@ -247,8 +251,10 @@ Result platform_pollevents() {
             mouse_pressed[MOUSE_BUTTON_LEFT] = mouse_down[MOUSE_BUTTON_LEFT] = false;
             break;
           case SDL_BUTTON_MIDDLE:
+            mouse_pressed[MOUSE_BUTTON_MIDDLE] = mouse_down[MOUSE_BUTTON_MIDDLE] = false;
             break;
           case SDL_BUTTON_RIGHT:
+            mouse_pressed[MOUSE_BUTTON_RIGHT] = mouse_down[MOUSE_BUTTON_RIGHT] = false;
             break;
           default:
             break;
