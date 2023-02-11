@@ -9,8 +9,8 @@
 #include "renderer.h"
 #include "node.h"
 
-#define NODE_GRID_WIDTH 28
-#define NODE_GRID_HEIGHT 26
+#define NODE_GRID_WIDTH 64
+#define NODE_GRID_HEIGHT 64
 #define MAX_NODE (NODE_GRID_WIDTH * NODE_GRID_HEIGHT)
 
 #define DEFAULT_PADDING 2
@@ -23,6 +23,8 @@ typedef struct State {
   f32 bpm;
   u32 tick;
   u32 paused;
+  i32 camera_x;
+  i32 camera_y;
   Node nodes[MAX_NODE];
 } __attribute__((packed, aligned(sizeof(u32)))) State;
 

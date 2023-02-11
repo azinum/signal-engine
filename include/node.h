@@ -38,6 +38,7 @@ typedef struct {
   u16 alive;
   u16 reads;
   u16 writes;
+  u16 ready;
   u16 id;
   u32 color;
   u32 target_color;

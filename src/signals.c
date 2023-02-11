@@ -12,24 +12,16 @@
 #define PROG_NAME "Signals"
 #define BPM 120.0f
 
-static void signal_engine_render_state_info(State* state);
 static void signal_state_init(State* state);
 static void signal_engine_init(Engine* state);
-
-void signal_engine_render_state_info(State* state) {
-  const char* paused_str[] = {"playing", "paused"};
-  u32 width = 0;
-  u32 height = 0;
-  platform_window_size(&width, &height);
-  const u32 PADDING = DEFAULT_PADDING;
-  render_text_format(PADDING, height - (1 * 20), 2, color_white, "status: %s", paused_str[state->paused == true]);
-}
 
 void signal_state_init(State* state) {
   state->dt = 0.0f;
   state->timer = 0.0f;
   state->bpm = BPM;
   state->paused = false;
+  state->camera_x = 0;
+  state->camera_y = 0;
   node_grid_init(state);
 }
 
@@ -87,6 +79,21 @@ i32 signal_engine_start(i32 argc, char** argv) {
         state->paused = !state->paused;
       }
 
+      if (!key_mod_ctrl) {
+        if (key_down[KEY_W]) {
+          state->camera_y -= 1;
+        }
+        if (key_down[KEY_S]) {
+          state->camera_y += 1;
+        }
+        if (key_down[KEY_A]) {
+          state->camera_x -= 1;
+        }
+        if (key_down[KEY_D]) {
+          state->camera_x += 1;
+        }
+      }
+
       renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
 
       if (!(state->tick % 32)) {
@@ -94,7 +101,6 @@ i32 signal_engine_start(i32 argc, char** argv) {
         platform_set_title(title);
       }
       nodes_update_and_render(&engine);
-      signal_engine_render_state_info(state);
       platform_window_render();
       state->tick++;
     }

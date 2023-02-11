@@ -41,10 +41,10 @@ typedef struct {
 } Buffer;
 
 typedef struct {
-  u32 x;
-  u32 y;
-  u32 w;
-  u32 h;
+  i32 x;
+  i32 y;
+  i32 w;
+  i32 h;
 } Box;
 
 #define BOX(X, Y, W, H) (Box) { .x = X, .y = Y, .w = W, .h = H, }
@@ -67,6 +67,6 @@ void log_info(const char* format, ...);
 
 f32 lerp_f32(f32 v0, f32 v1, f32 t);
 
-u32 inside_box(const Box* box, u32 x, u32 y);
+u32 inside_box(const Box* box, i32 x, i32 y);
 
 #endif // _COMMON_H
