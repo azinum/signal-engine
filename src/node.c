@@ -7,8 +7,10 @@ static Node* node_from_grid_pos(State* state, u32 x, u32 y);
 static Result id_to_grid_pos(Node* node, u32* x, u32* y);
 static void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count);
 
-static void node_increment_writes(Node* node);
-static void node_increment_reads(Node* node);
+// broadcast to neighbours
+static u32 node_broadcast(Node* node, Node* input, State* state);
+static u32 node_increment_writes(Node* node);
+static u32 node_increment_reads(Node* node);
 
 static void event_callback(Node* node, Node* input, State* state);
 
@@ -16,12 +18,16 @@ static void event_none(Node* self, Node* input, State* state);
 static void event_clock(Node* self, Node* input, State* state);
 static void event_adder(Node* self, Node* input, State* state);
 static void event_io(Node* self, Node* input, State* state);
+static void event_and(Node* self, Node* input, State* state);
+static void event_print(Node* self, Node* input, State* state);
 
-node_event node_events[MAX_NODE_TYPE] = {
-  event_none,
-  event_clock,
-  event_adder,
-  event_io,
+static Node_event node_events[MAX_NODE_TYPE] = {
+  { .event = event_none,  .reads = 0, },
+  { .event = event_clock, .reads = 0, },
+  { .event = event_adder, .reads = 2, },
+  { .event = event_io,    .reads = 1, },
+  { .event = event_and,   .reads = 2, },
+  { .event = event_print, .reads = 1, },
 };
 
 void event_callback(Node* node, Node* input, State* state) {
@@ -29,7 +35,12 @@ void event_callback(Node* node, Node* input, State* state) {
     return;
   }
   if (node->reads < MAX_READ_EVENTS && node->type < MAX_NODE_TYPE) {
-    node_events[node->type](node, input, state);
+    Node_event* event = &node_events[node->type];
+    event->event(node, input, state);
+    if (node->reads >= event->reads) {
+      node->reads = 0;
+      node->writes = 0;
+    }
   }
 }
 
@@ -47,14 +58,7 @@ void event_clock(Node* self, Node* input, State* state) {
     return;
   }
   self->data.counter++;
-  u32 count = 0;
-  Node* neighbours[MAX_NEIGHBOUR] = {NULL};
-  node_get_alive_neighbours(state, self, neighbours, &count);
-  for (u32 i = 0; i < count; ++i) {
-    Node* n = neighbours[i];
-    node_increment_writes(self);
-    event_callback(n, self, state);
-  }
+  node_broadcast(self, input, state);
 }
 
 void event_adder(Node* self, Node* input, State* state) {
@@ -62,8 +66,12 @@ void event_adder(Node* self, Node* input, State* state) {
     return;
   }
   self->data.counter += input->data.counter;
-  node_increment_writes(self);
-  node_increment_reads(self);
+  if (!(node_increment_reads(self) % 2)) {
+    // broadcast data
+    node_broadcast(self, input, state);
+    // reset counter
+    self->data.counter = 0;
+  }
 }
 
 void event_io(Node* self, Node* input, State* state) {
@@ -71,17 +79,30 @@ void event_io(Node* self, Node* input, State* state) {
     node_increment_reads(self);
     self->data = input->data;
   }
-  u32 count = 0;
-  Node* neighbours[MAX_NEIGHBOUR] = {NULL};
-  node_get_alive_neighbours(state, self, neighbours, &count);
-  for (u32 i = 0; i < count; ++i) {
-    Node* n = neighbours[i];
-    if (n->type == NODE_IO) {
-      n->data = self->data;
-    }
-    node_increment_writes(self);
-    event_callback(n, self, state);
+  node_broadcast(self, input, state);
+}
+
+void event_and(Node* self, Node* input, State* state) {
+  if (!input) {
+    return;
   }
+  node_increment_reads(self);
+  self->data.counter += input->data.counter != 0;
+
+  if (self->data.counter >= 2) {
+    self->data.counter = 1;
+    node_broadcast(self, input, state);
+    self->data.counter = 0;
+  }
+}
+
+void event_print(Node* self, Node* input, State* state) {
+  if (!input) {
+    return;
+  }
+  node_increment_reads(self);
+  self->data = input->data;
+  printf("%04d:%s: %d\n", self->id, node_type_str[self->type], self->data.counter);
 }
 
 Node* node_from_grid_pos(State* state, u32 x, u32 y) {
@@ -140,14 +161,29 @@ void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours
   }
 }
 
-void node_increment_writes(Node* node) {
-  node->color = color_white;
-  node->writes++;
+u32 node_broadcast(Node* self, Node* input, State* state) {
+  u32 count = 0;
+  Node* neighbours[MAX_NEIGHBOUR] = {NULL};
+  node_get_alive_neighbours(state, self, neighbours, &count);
+  for (u32 i = 0; i < count; ++i) {
+    Node* n = neighbours[i];
+    if (n == input) { // don't loop back
+      continue;
+    }
+    node_increment_writes(self);
+    event_callback(n, self, state);
+  }
+  return count;
 }
 
-void node_increment_reads(Node* node) {
+u32 node_increment_writes(Node* node) {
+  node->color = color_white;
+  return ++node->writes;
+}
+
+u32 node_increment_reads(Node* node) {
   node->color = color_green;
-  node->reads++;
+  return ++node->reads;
 }
 
 void node_init(Node* node, Box box, Node_type type) {
@@ -191,14 +227,6 @@ void nodes_update_and_render(struct State* state) {
     state->timer = state->timer - (1.0f / bps);
   }
   Node* hover = NULL;
-  // reset nodes
-  if (beat) {
-    for (u32 i = 0; i < MAX_NODE; ++i) {
-      Node* node = &state->nodes[i];
-      node->reads = 0;
-      node->writes = 0;
-    }
-  }
 
   // process nodes
   for (u32 i = 0; i < MAX_NODE; ++i) {
@@ -229,13 +257,6 @@ void nodes_update_and_render(struct State* state) {
     if (!node->alive) {
       continue;
     }
-    if (hover && key_pressed[KEY_R]) {
-      node_reset(node);
-      continue;
-    }
-    if (hover && mouse_pressed[MOUSE_BUTTON_LEFT]) {
-      event_callback(node, NULL, state);
-    }
     if (beat && node->type == NODE_CLOCK) {
       event_callback(node, NULL, state);
     }
@@ -244,6 +265,13 @@ void nodes_update_and_render(struct State* state) {
   // and finally render them
   if (hover) {
     hover->color = color_lerp(hover->target_color, color_white, 0.5f);
+    if (mouse_pressed[MOUSE_BUTTON_LEFT]) {
+      hover->data.counter = 1;
+      event_callback(hover, NULL, state);
+    }
+    if (key_pressed[KEY_R]) {
+      node_reset(hover);
+    }
   }
 
   for (u32 i = 0; i < MAX_NODE; ++i) {

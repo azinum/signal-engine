@@ -16,6 +16,8 @@ typedef enum {
   COLOR_GRAY,
   COLOR_PURPLE,
   COLOR_CYAN,
+  COLOR_YELLOW,
+  COLOR_DARK_GREEN,
 
   MAX_COLOR,
 } Color;
