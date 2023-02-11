@@ -102,6 +102,8 @@ i32 mouse_x = INT32_MAX;
 i32 mouse_y = INT32_MAX;
 u8 mouse_down[MAX_MOUSE_BUTTON] = {0};
 u8 mouse_pressed[MAX_MOUSE_BUTTON] = {0};
+i32 mouse_scroll_x = 0;
+i32 mouse_scroll_y = 0;
 
 static SDL_Window* sdl_window = NULL;
 static SDL_Renderer* sdl_renderer = NULL;
@@ -188,6 +190,8 @@ Result platform_pollevents() {
   Result result = Ok;
   memset(&key_pressed[0], 0, sizeof(key_pressed));
   memset(&mouse_pressed[0], 0, sizeof(mouse_pressed));
+  mouse_scroll_x = 0;
+  mouse_scroll_y = 0;
 
   SDL_Keymod key_mod = SDL_GetModState();
   key_mod_ctrl = (key_mod & KMOD_LCTRL) == KMOD_LCTRL;
@@ -249,6 +253,11 @@ Result platform_pollevents() {
           default:
             break;
         }
+        break;
+      }
+      case SDL_MOUSEWHEEL: {
+        mouse_scroll_x = event.wheel.x;
+        mouse_scroll_y = event.wheel.y;
         break;
       }
       default:

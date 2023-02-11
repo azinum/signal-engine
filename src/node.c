@@ -16,7 +16,7 @@ void node_grid_init(struct State* state) {
   for (u32 y = 0; y < NODE_GRID_HEIGHT; ++y) {
     for (u32 x = 0; x < NODE_GRID_WIDTH; ++x) {
       Node* node = &state->nodes[y * NODE_GRID_WIDTH + x];
-      node_init(node, BOX(PADDING + x * (NODE_WIDTH + PADDING), PADDING + y * (NODE_HEIGHT + PADDING), NODE_WIDTH, NODE_HEIGHT), NODE_PULSE);
+      node_init(node, BOX(PADDING + x * (NODE_WIDTH + PADDING), PADDING + y * (NODE_HEIGHT + PADDING), NODE_WIDTH, NODE_HEIGHT), NODE_NONE);
       node->alive = false;
       node->id = y * NODE_GRID_WIDTH + x;
     }
@@ -38,17 +38,28 @@ void nodes_update_and_render(struct State* state) {
       if (mouse_pressed[MOUSE_BUTTON_LEFT]) {
         node->alive = !node->alive;
       }
+      if (mouse_scroll_y > 0) {
+        node->type = (node->type + 1) % MAX_NODE_TYPE;
+      }
+      else if (mouse_scroll_y < 0) {
+        if (node->type == 0) {
+          node->type = MAX_NODE_TYPE - 1;
+        }
+        else {
+          node->type -= 1;
+        }
+      }
       hover = node;
     }
     if (!node->alive) {
       continue;
     }
-    if (beat) {
-      node->data.counter++;
-      node->data.counter %= 100;
-    }
     switch (node->type) {
-      case NODE_PULSE: {
+      case NODE_CLOCK: {
+        if (beat) {
+          node->data.counter++;
+          node->data.counter %= 100;
+        }
         break;
       }
       default:
@@ -80,7 +91,7 @@ void node_render_info_box(struct State* state, Node* node) {
   const u32 box_h = 86;
   render_rect(mouse_x + 16, mouse_y + 16, box_w, box_h, color_rgb(0xf0, 0xf0, 0xf0));
   render_text_format(mouse_x + 20, mouse_y + 20 + 0*20, 2, color_black, "id: %d", node->id);
-  render_text_format(mouse_x + 20, mouse_y + 20 + 1*20, 2, color_black, "type: %d", node->type);
+  render_text_format(mouse_x + 20, mouse_y + 20 + 1*20, 2, color_black, "type: %s", node_type_str[node->type]);
   render_text_format(mouse_x + 20, mouse_y + 20 + 2*20, 2, color_black, "alive: %d", node->alive);
   render_text_format(mouse_x + 20, mouse_y + 20 + 3*20, 2, color_black, "counter: %d", node->data.counter);
 }

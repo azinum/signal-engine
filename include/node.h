@@ -5,10 +5,15 @@
 
 typedef enum {
   NODE_NONE = 0,
-  NODE_PULSE,
+  NODE_CLOCK,
 
-  NODE_MAX_TYPE,
+  MAX_NODE_TYPE,
 } Node_type;
+
+const char* node_type_str[MAX_NODE_TYPE] = {
+  [NODE_NONE] = "none",
+  [NODE_CLOCK] = "clock",
+};
 
 typedef struct {
   u32 counter;
