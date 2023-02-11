@@ -53,9 +53,10 @@ typedef struct {
   u32 target_color;
 } __attribute__((packed, aligned(sizeof(u32)))) Node;
 
+struct Engine;
 struct State;
 
-typedef void (*node_event)(Node* self, Node* input, struct State*);
+typedef void (*node_event)(Node* self, Node* input, struct Engine*);
 
 typedef struct {
   node_event event;
@@ -70,8 +71,8 @@ void node_clear(Node* node);
 
 void node_grid_init(struct State* state);
 
-void nodes_update_and_render(struct State* state);
+void nodes_update_and_render(struct Engine* e);
 
-void node_render_info_box(struct State* state, Node* node);
+void node_render_info_box(struct Engine* e, Node* node);
 
 #endif

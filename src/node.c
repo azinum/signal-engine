@@ -7,25 +7,25 @@
 Node copy_data;
 Node* copy = NULL;
 
-static Node* node_from_grid_pos(State* state, u32 x, u32 y);
+static Node* node_from_grid_pos(Engine* e, u32 x, u32 y);
 static Result id_to_grid_pos(Node* node, u32* x, u32* y);
-static void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count);
+static void node_get_alive_neighbours(Engine* e, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count);
 static void node_copy(Node* dest, Node* src);
 
 // broadcast to neighbours
-static u32 node_broadcast(Node* node, Node* input, State* state);
+static u32 node_broadcast(Node* node, Node* input, Engine* e);
 static u32 node_increment_writes(Node* node);
 static u32 node_increment_reads(Node* node);
 
-static void event_callback(Node* node, Node* input, State* state);
+static void event_callback(Node* node, Node* input, Engine* e);
 
-static void event_none(Node* self, Node* input, State* state);
-static void event_clock(Node* self, Node* input, State* state);
-static void event_adder(Node* self, Node* input, State* state);
-static void event_io(Node* self, Node* input, State* state);
-static void event_and(Node* self, Node* input, State* state);
-static void event_print(Node* self, Node* input, State* state);
-static void event_incr(Node* self, Node* input, State* state);
+static void event_none(Node* self, Node* input, Engine* e);
+static void event_clock(Node* self, Node* input, Engine* e);
+static void event_adder(Node* self, Node* input, Engine* e);
+static void event_io(Node* self, Node* input, Engine* e);
+static void event_and(Node* self, Node* input, Engine* e);
+static void event_print(Node* self, Node* input, Engine* e);
+static void event_incr(Node* self, Node* input, Engine* e);
 
 static Node_event node_events[MAX_NODE_TYPE] = {
   { .event = event_none,  .reads = 0, },
@@ -37,13 +37,13 @@ static Node_event node_events[MAX_NODE_TYPE] = {
   { .event = event_incr, .reads = 1, },
 };
 
-void event_callback(Node* node, Node* input, State* state) {
+void event_callback(Node* node, Node* input, Engine* e) {
   if (!node) {
     return;
   }
   if (node->reads < MAX_READ_EVENTS && node->type < MAX_NODE_TYPE) {
     Node_event* event = &node_events[node->type];
-    event->event(node, input, state);
+    event->event(node, input, e);
     if (node->reads >= event->reads) {
       node->reads = 0;
       node->writes = 0;
@@ -51,42 +51,42 @@ void event_callback(Node* node, Node* input, State* state) {
   }
 }
 
-void event_none(Node* self, Node* input, State* state) {
+void event_none(Node* self, Node* input, Engine* e) {
   (void)self;
   (void)input;
-  (void)state;
+  (void)e;
   if (input) {
     node_increment_reads(self);
   }
 }
 
-void event_clock(Node* self, Node* input, State* state) {
+void event_clock(Node* self, Node* input, Engine* e) {
   if (input) {
     return;
   }
   self->data.counter++;
-  node_broadcast(self, input, state);
+  node_broadcast(self, input, e);
 }
 
-void event_adder(Node* self, Node* input, State* state) {
+void event_adder(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
   self->data.counter += input->data.counter;
   if (node_increment_reads(self) == 2) {
-    node_broadcast(self, input, state);
+    node_broadcast(self, input, e);
   }
 }
 
-void event_io(Node* self, Node* input, State* state) {
+void event_io(Node* self, Node* input, Engine* e) {
   if (input) {
     node_increment_reads(self);
     self->data = input->data;
   }
-  node_broadcast(self, input, state);
+  node_broadcast(self, input, e);
 }
 
-void event_and(Node* self, Node* input, State* state) {
+void event_and(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
@@ -95,12 +95,12 @@ void event_and(Node* self, Node* input, State* state) {
 
   if (self->data.counter >= 2) {
     self->data.counter = 1;
-    node_broadcast(self, input, state);
+    node_broadcast(self, input, e);
     self->data.counter = 0;
   }
 }
 
-void event_print(Node* self, Node* input, State* state) {
+void event_print(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
@@ -109,19 +109,19 @@ void event_print(Node* self, Node* input, State* state) {
   printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.counter);
 }
 
-void event_incr(Node* self, Node* input, State* state) {
+void event_incr(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
   self->data.counter += input->data.counter;
-  node_broadcast(self, input, state);
+  node_broadcast(self, input, e);
 }
 
-Node* node_from_grid_pos(State* state, u32 x, u32 y) {
+Node* node_from_grid_pos(Engine* e, u32 x, u32 y) {
   Node* result = NULL;
   u32 index = y * NODE_GRID_WIDTH + x;
   if (index < MAX_NODE) {
-    result = &state->nodes[index];
+    result = &e->state.nodes[index];
   }
   return result;
 }
@@ -133,14 +133,14 @@ Result id_to_grid_pos(Node* node, u32* x, u32* y) {
   return result;
 }
 
-void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count) {
+void node_get_alive_neighbours(Engine* e, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count) {
   *count = 0;
   u32 x = 0;
   u32 y = 0;
   id_to_grid_pos(node, &x, &y);
 
   {
-    Node* n = node_from_grid_pos(state, x - 1, y);
+    Node* n = node_from_grid_pos(e, x - 1, y);
     if (n) {
       if (n->alive) {
         neighbours[(*count)++] = n;
@@ -148,7 +148,7 @@ void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours
     }
   }
   {
-    Node* n = node_from_grid_pos(state, x + 1, y);
+    Node* n = node_from_grid_pos(e, x + 1, y);
     if (n) {
       if (n->alive) {
         neighbours[(*count)++] = n;
@@ -156,7 +156,7 @@ void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours
     }
   }
   {
-    Node* n = node_from_grid_pos(state, x, y - 1);
+    Node* n = node_from_grid_pos(e, x, y - 1);
     if (n) {
       if (n->alive) {
         neighbours[(*count)++] = n;
@@ -164,7 +164,7 @@ void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours
     }
   }
   {
-    Node* n = node_from_grid_pos(state, x, y + 1);
+    Node* n = node_from_grid_pos(e, x, y + 1);
     if (n) {
       if (n->alive) {
         neighbours[(*count)++] = n;
@@ -179,17 +179,17 @@ void node_copy(Node* dest, Node* src) {
   dest->data = src->data;
 }
 
-u32 node_broadcast(Node* self, Node* input, State* state) {
+u32 node_broadcast(Node* self, Node* input, Engine* e) {
   u32 count = 0;
   Node* neighbours[MAX_NEIGHBOUR] = {NULL};
-  node_get_alive_neighbours(state, self, neighbours, &count);
+  node_get_alive_neighbours(e, self, neighbours, &count);
   for (u32 i = 0; i < count; ++i) {
     Node* n = neighbours[i];
     if (n == input) { // don't loop back
       continue;
     }
     node_increment_writes(self);
-    event_callback(n, self, state);
+    event_callback(n, self, e);
   }
   return count;
 }
@@ -223,7 +223,7 @@ void node_clear(Node* node) {
   node_init(node, node->box, NODE_NONE);
 }
 
-void node_grid_init(struct State* state) {
+void node_grid_init(State* state) {
   const u32 PADDING = DEFAULT_PADDING;
   const u32 NODE_WIDTH = 20;
   const u32 NODE_HEIGHT = 20;
@@ -237,18 +237,18 @@ void node_grid_init(struct State* state) {
   }
 }
 
-void nodes_update_and_render(struct State* state) {
-  const f32 bps = state->bpm / 60.0f;
+void nodes_update_and_render(Engine* e) {
+  const f32 bps = e->state.bpm / 60.0f;
   u32 beat = 0;
-  if (state->timer >= (1.0f / bps)) {
+  if (e->state.timer >= (1.0f / bps)) {
     beat = 1;
-    state->timer = state->timer - (1.0f / bps);
+    e->state.timer = e->state.timer - (1.0f / bps);
   }
   Node* hover = NULL;
 
   // process nodes
   for (u32 i = 0; i < MAX_NODE; ++i) {
-    Node* node = &state->nodes[i];
+    Node* node = &e->state.nodes[i];
     if (inside_box(&node->box, mouse_x, mouse_y)) {
       if (mouse_pressed[MOUSE_BUTTON_RIGHT]) {
         node_clear(node);
@@ -286,14 +286,14 @@ void nodes_update_and_render(struct State* state) {
       continue;
     }
     if (beat && node->type == NODE_CLOCK) {
-      event_callback(node, NULL, state);
+      event_callback(node, NULL, e);
     }
   }
 
   if (hover) {
     if (mouse_pressed[MOUSE_BUTTON_LEFT]) {
       hover->data.counter = 1;
-      event_callback(hover, NULL, state);
+      event_callback(hover, NULL, e);
     }
     if (key_pressed[KEY_R]) {
       node_reset(hover);
@@ -314,13 +314,13 @@ void nodes_update_and_render(struct State* state) {
 
   // and finally render them
   for (u32 i = 0; i < MAX_NODE; ++i) {
-    Node* node = &state->nodes[i];
+    Node* node = &e->state.nodes[i];
     if (!node->alive) {
       render_fill_rect(node->box.x, node->box.y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
       continue;
     }
     node->target_color = colors[node_type_color[node->type]];
-    node->color = color_lerp(node->color, node->target_color, state->dt * 10.0f);
+    node->color = color_lerp(node->color, node->target_color, e->state.dt * 10.0f);
 
     if (node == hover) {
       node->color = color_lerp(node->target_color, color_white, 0.4f);
@@ -329,10 +329,10 @@ void nodes_update_and_render(struct State* state) {
     render_text_format(node->box.x + 2, node->box.y + 2, 2, color_white, "%.*s", 1, node_type_str[node->type]);
   }
 
-  node_render_info_box(state, hover);
+  node_render_info_box(e, hover);
 }
 
-void node_render_info_box(struct State* state, Node* node) {
+void node_render_info_box(Engine* e, Node* node) {
   u32 width = 0;
   u32 height = 0;
   platform_window_size(&width, &height);

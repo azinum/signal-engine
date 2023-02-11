@@ -25,12 +25,18 @@ typedef struct State {
   Node nodes[MAX_NODE];
 } __attribute__((packed, aligned(sizeof(u32)))) State;
 
-void signals_state_init(State* state);
+typedef struct Engine {
+  // serializable state
+  State state;
+  // internal state
+  Buffer buffer_map;
+  i32 buffer_fd;
+} Engine;
 
-i32 signals_start(i32 argc, char** argv);
+i32 signal_engine_start(i32 argc, char** argv);
 
-void signals_state_store(const char* path, State* state);
+void signal_engine_state_store(const char* path, State* state);
 
-void signals_state_load(const char* path, State* state);
+void signal_engine_state_load(const char* path, State* state);
 
 #endif // _SIGNALS_H

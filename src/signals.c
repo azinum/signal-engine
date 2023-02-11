@@ -12,9 +12,11 @@
 #define PROG_NAME "Signals"
 #define BPM 120.0f
 
-static void signals_render_state_info(State* state);
+static void signal_engine_render_state_info(State* state);
+static void signal_state_init(State* state);
+static void signal_engine_init(Engine* state);
 
-void signals_render_state_info(State* state) {
+void signal_engine_render_state_info(State* state) {
   const char* paused_str[] = {"playing", "paused"};
   u32 width = 0;
   u32 height = 0;
@@ -23,7 +25,7 @@ void signals_render_state_info(State* state) {
   render_text_format(PADDING, height - (2 * 20), 2, color_white, "status: %s", paused_str[state->paused == true]);
 }
 
-void signals_state_init(State* state) {
+void signal_state_init(State* state) {
   state->dt = 0.0f;
   state->timer = 0.0f;
   state->bpm = BPM;
@@ -31,12 +33,19 @@ void signals_state_init(State* state) {
   node_grid_init(state);
 }
 
-i32 signals_start(i32 argc, char** argv) {
+void signal_engine_init(Engine* e) {
+  signal_state_init(&e->state);
+}
+
+i32 signal_engine_start(i32 argc, char** argv) {
   i32 result = EXIT_SUCCESS;
 
-  State state;
-  signals_state_init(&state);
-  signals_state_load(STATE_PATH, &state);
+  Engine engine;
+  signal_engine_init(&engine);
+  State* state = &engine.state;
+
+  signal_state_init(state);
+  signal_engine_state_load(STATE_PATH, state);
 
   const f32 DT_MAX = 0.5f;
   char title[MAX_TITLE_LENGTH] = {0};
@@ -46,55 +55,55 @@ i32 signals_start(i32 argc, char** argv) {
     u32 current = prev;
 
     while (platform_pollevents() == Ok) {
-      if (!state.paused) {
+      if (!state->paused) {
         current = platform_get_ticks();
-        state.dt = (current - prev) * 0.001f;
+        state->dt = (current - prev) * 0.001f;
         prev = current;
-        if (state.dt > DT_MAX) {
-          state.dt = DT_MAX;
+        if (state->dt > DT_MAX) {
+          state->dt = DT_MAX;
         }
-        state.timer += state.dt;
+        state->timer += state->dt;
       }
 
       if (key_pressed[KEY_1]) {
-        state.bpm -= 10;
+        state->bpm -= 10;
       }
       if (key_pressed[KEY_2]) {
-        state.bpm += 10;
+        state->bpm += 10;
       }
       if (key_pressed[KEY_Q] && key_mod_ctrl) {
-        signals_state_init(&state);
+        signal_state_init(state);
         continue;
       }
       if (key_pressed[KEY_S] && key_mod_ctrl) {
-        signals_state_store(STATE_PATH, &state);
+        signal_engine_state_store(STATE_PATH, state);
         continue;
       }
       if (key_pressed[KEY_R] && key_mod_ctrl) {
-        signals_state_load(STATE_PATH, &state);
+        signal_engine_state_load(STATE_PATH, state);
         continue;
       }
       if (key_pressed[KEY_SPACE]) {
-        state.paused = !state.paused;
+        state->paused = !state->paused;
       }
 
       renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
 
-      if (!(state.tick % 32)) {
-        snprintf(title, MAX_TITLE_LENGTH, "%s | %.4g bpm | %d fps | %.3g delta", PROG_NAME, state.bpm, (u32)(1.0f / state.dt), state.dt);
+      if (!(state->tick % 32)) {
+        snprintf(title, MAX_TITLE_LENGTH, "%s | %.4g bpm | %d fps | %.3g delta", PROG_NAME, state->bpm, (u32)(1.0f / state->dt), state->dt);
         platform_set_title(title);
       }
-      nodes_update_and_render(&state);
-      signals_render_state_info(&state);
+      nodes_update_and_render(&engine);
+      signal_engine_render_state_info(state);
       platform_window_render();
-      state.tick++;
+      state->tick++;
     }
     platform_destroy();
   }
   return result;
 }
 
-void signals_state_store(const char* path, State* state) {
+void signal_engine_state_store(const char* path, State* state) {
   Buffer buffer;
   buffer.data = (u8*)state;
   buffer.size = sizeof(State);
@@ -103,7 +112,7 @@ void signals_state_store(const char* path, State* state) {
   }
 }
 
-void signals_state_load(const char* path, State* state) {
+void signal_engine_state_load(const char* path, State* state) {
   Buffer buffer;
   if (file_read(path, &buffer) == Ok) {
     if (sizeof(State) != buffer.size) {
