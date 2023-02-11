@@ -42,54 +42,54 @@ i32 signals_start(i32 argc, char** argv) {
   char title[MAX_TITLE_LENGTH] = {0};
 
   if (platform_window_create("", 800, 600) == Ok) {
-      u32 prev = platform_get_ticks();
-      u32 current = prev;
+    u32 prev = platform_get_ticks();
+    u32 current = prev;
 
-      while (platform_pollevents() == Ok) {
-        if (!state.paused) {
-          current = platform_get_ticks();
-          state.dt = (current - prev) * 0.001f;
-          prev = current;
-          if (state.dt > DT_MAX) {
-            state.dt = DT_MAX;
-          }
-          state.timer += state.dt;
+    while (platform_pollevents() == Ok) {
+      if (!state.paused) {
+        current = platform_get_ticks();
+        state.dt = (current - prev) * 0.001f;
+        prev = current;
+        if (state.dt > DT_MAX) {
+          state.dt = DT_MAX;
         }
-
-        if (key_pressed[KEY_1]) {
-          state.bpm -= 10;
-        }
-        if (key_pressed[KEY_2]) {
-          state.bpm += 10;
-        }
-        if (key_pressed[KEY_R] && key_mod_ctrl) {
-          signals_state_init(&state);
-          continue;
-        }
-        if (key_pressed[KEY_S] && key_mod_ctrl) {
-          signals_state_store(STATE_PATH, &state);
-          continue;
-        }
-        if (key_pressed[KEY_L] && key_mod_ctrl) {
-          signals_state_load(STATE_PATH, &state);
-          continue;
-        }
-        if (key_pressed[KEY_SPACE]) {
-          state.paused = !state.paused;
-        }
-
-        renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
-
-        if (!(state.tick % 32)) {
-          snprintf(title, MAX_TITLE_LENGTH, "%s | %.4g bpm | %d fps | %.3g delta", PROG_NAME, state.bpm, (u32)(1.0f / state.dt), state.dt);
-          platform_set_title(title);
-        }
-        nodes_update_and_render(&state);
-        signals_render_state_info(&state);
-        platform_window_render();
-        state.tick++;
+        state.timer += state.dt;
       }
-      platform_destroy();
+
+      if (key_pressed[KEY_1]) {
+        state.bpm -= 10;
+      }
+      if (key_pressed[KEY_2]) {
+        state.bpm += 10;
+      }
+      if (key_pressed[KEY_Q] && key_mod_ctrl) {
+        signals_state_init(&state);
+        continue;
+      }
+      if (key_pressed[KEY_S] && key_mod_ctrl) {
+        signals_state_store(STATE_PATH, &state);
+        continue;
+      }
+      if (key_pressed[KEY_R] && key_mod_ctrl) {
+        signals_state_load(STATE_PATH, &state);
+        continue;
+      }
+      if (key_pressed[KEY_SPACE]) {
+        state.paused = !state.paused;
+      }
+
+      renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
+
+      if (!(state.tick % 32)) {
+        snprintf(title, MAX_TITLE_LENGTH, "%s | %.4g bpm | %d fps | %.3g delta", PROG_NAME, state.bpm, (u32)(1.0f / state.dt), state.dt);
+        platform_set_title(title);
+      }
+      nodes_update_and_render(&state);
+      signals_render_state_info(&state);
+      platform_window_render();
+      state.tick++;
+    }
+    platform_destroy();
   }
   return result;
 }

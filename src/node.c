@@ -3,9 +3,13 @@
 #define MAX_NEIGHBOUR 4
 #define MAX_READ_EVENTS 4
 
+Node copy_data;
+Node* copy = NULL;
+
 static Node* node_from_grid_pos(State* state, u32 x, u32 y);
 static Result id_to_grid_pos(Node* node, u32* x, u32* y);
 static void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count);
+static void node_copy(Node* dest, Node* src);
 
 // broadcast to neighbours
 static u32 node_broadcast(Node* node, Node* input, State* state);
@@ -66,11 +70,8 @@ void event_adder(Node* self, Node* input, State* state) {
     return;
   }
   self->data.counter += input->data.counter;
-  if (!(node_increment_reads(self) % 2)) {
-    // broadcast data
+  if (node_increment_reads(self) == 2) {
     node_broadcast(self, input, state);
-    // reset counter
-    self->data.counter = 0;
   }
 }
 
@@ -159,6 +160,12 @@ void node_get_alive_neighbours(struct State* state, Node* node, Node* neighbours
       }
     }
   }
+}
+
+void node_copy(Node* dest, Node* src) {
+  node_reset(dest);
+  dest->type = src->type;
+  dest->data = src->data;
 }
 
 u32 node_broadcast(Node* self, Node* input, State* state) {
@@ -252,6 +259,12 @@ void nodes_update_and_render(struct State* state) {
         }
         continue;
       }
+      if (key_pressed[KEY_V] && key_mod_ctrl) {
+        if (copy) {
+          node_copy(node, copy);
+          log_info("pasted node `%d`\n", copy->id);
+        }
+      }
       hover = node;
     }
     if (!node->alive) {
@@ -271,6 +284,18 @@ void nodes_update_and_render(struct State* state) {
     }
     if (key_pressed[KEY_R]) {
       node_reset(hover);
+    }
+    if (key_pressed[KEY_C] && key_mod_ctrl) {
+      copy = &copy_data;
+      memcpy(copy, hover, sizeof(Node));
+      log_info("copied node `%d`\n", hover->id);
+    }
+    if (key_pressed[KEY_X] && key_mod_ctrl) {
+      copy = &copy_data;
+      memcpy(copy, hover, sizeof(Node));
+      node_clear(hover);
+      hover->alive = false;
+      log_info("cut node `%d`\n", hover->id);
     }
   }
 
