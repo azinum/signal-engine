@@ -10,6 +10,7 @@ typedef enum {
   NODE_IO,  // when reciving input, send output
   NODE_AND, // ands inputs together, tell the neighbours if the result is non-zero, then reset the node to zero
   NODE_PRINT, // print the value(s) that this node recieved
+  NODE_INCR, // add one input and send one output
 
   MAX_NODE_TYPE,
 } Node_type;
@@ -21,6 +22,7 @@ const char* node_type_str[MAX_NODE_TYPE] = {
   [NODE_IO]    = "io",
   [NODE_AND]   = "and",
   [NODE_PRINT] = "print",
+  [NODE_INCR]  = "incr",
 };
 
 const u32 node_type_color[MAX_NODE_TYPE] = {
@@ -29,12 +31,13 @@ const u32 node_type_color[MAX_NODE_TYPE] = {
   COLOR_BLUE,
   COLOR_PURPLE,
   COLOR_DARK_GREEN,
-  COLOR_YELLOW
+  COLOR_YELLOW,
+  COLOR_TURQUOSE,
 };
 
 typedef union {
   struct {
-    u32 counter;
+    u16 counter;
   };
 } Node_data;
 
@@ -42,10 +45,10 @@ typedef struct {
   Box box;
   Node_type type;
   Node_data data;
-  u32 alive;
-  u32 reads;
-  u32 writes;
-  u32 id;
+  u16 alive;
+  u16 reads;
+  u16 writes;
+  u16 id;
   u32 color;
   u32 target_color;
 } __attribute__((packed, aligned(sizeof(u32)))) Node;

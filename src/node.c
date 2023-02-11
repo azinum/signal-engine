@@ -2,6 +2,7 @@
 
 #define MAX_NEIGHBOUR 4
 #define MAX_READ_EVENTS 4
+#define BORDER_THICKNESS 2
 
 Node copy_data;
 Node* copy = NULL;
@@ -24,6 +25,7 @@ static void event_adder(Node* self, Node* input, State* state);
 static void event_io(Node* self, Node* input, State* state);
 static void event_and(Node* self, Node* input, State* state);
 static void event_print(Node* self, Node* input, State* state);
+static void event_incr(Node* self, Node* input, State* state);
 
 static Node_event node_events[MAX_NODE_TYPE] = {
   { .event = event_none,  .reads = 0, },
@@ -32,6 +34,7 @@ static Node_event node_events[MAX_NODE_TYPE] = {
   { .event = event_io,    .reads = 1, },
   { .event = event_and,   .reads = 2, },
   { .event = event_print, .reads = 1, },
+  { .event = event_incr, .reads = 1, },
 };
 
 void event_callback(Node* node, Node* input, State* state) {
@@ -103,7 +106,15 @@ void event_print(Node* self, Node* input, State* state) {
   }
   node_increment_reads(self);
   self->data = input->data;
-  printf("%04d:%s: %d\n", self->id, node_type_str[self->type], self->data.counter);
+  printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.counter);
+}
+
+void event_incr(Node* self, Node* input, State* state) {
+  if (!input) {
+    return;
+  }
+  self->data.counter += input->data.counter;
+  node_broadcast(self, input, state);
 }
 
 Node* node_from_grid_pos(State* state, u32 x, u32 y) {
@@ -270,14 +281,16 @@ void nodes_update_and_render(struct State* state) {
     if (!node->alive) {
       continue;
     }
+    if (key_pressed[KEY_Q]) {
+      node_reset(node);
+      continue;
+    }
     if (beat && node->type == NODE_CLOCK) {
       event_callback(node, NULL, state);
     }
   }
 
-  // and finally render them
   if (hover) {
-    hover->color = color_lerp(hover->target_color, color_white, 0.5f);
     if (mouse_pressed[MOUSE_BUTTON_LEFT]) {
       hover->data.counter = 1;
       event_callback(hover, NULL, state);
@@ -299,16 +312,20 @@ void nodes_update_and_render(struct State* state) {
     }
   }
 
+  // and finally render them
   for (u32 i = 0; i < MAX_NODE; ++i) {
     Node* node = &state->nodes[i];
     if (!node->alive) {
-      render_rect(node->box.x, node->box.y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
+      render_fill_rect(node->box.x, node->box.y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
       continue;
     }
     node->target_color = colors[node_type_color[node->type]];
     node->color = color_lerp(node->color, node->target_color, state->dt * 10.0f);
 
-    render_rect(node->box.x, node->box.y, node->box.w, node->box.h, node->color);
+    if (node == hover) {
+      node->color = color_lerp(node->target_color, color_white, 0.4f);
+    }
+    render_fill_rect(node->box.x, node->box.y, node->box.w, node->box.h, node->color);
     render_text_format(node->box.x + 2, node->box.y + 2, 2, color_white, "%.*s", 1, node_type_str[node->type]);
   }
 
@@ -324,12 +341,12 @@ void node_render_info_box(struct State* state, Node* node) {
   const u32 PADDING = DEFAULT_PADDING;
   const u32 box_w = width - 620;
   const u32 box_h = height - (2 * PADDING);
-  render_rect(618, 2, box_w, box_h, color_rgb(0x15, 0x16, 0x20));
+  render_fill_rect(618, 2, box_w, box_h, color_rgb(0x15, 0x16, 0x20));
   if (node) {
     render_text_format(x + PADDING, y + PADDING + 0*20, 2, color_white, "type: %s", node_type_str[node->type], node->id);
-    render_text_format(x + PADDING, y + PADDING + 1*20, 2, color_white, "id: %d", node->id);
-    render_text_format(x + PADDING, y + PADDING + 2*20, 2, color_white, "counter: %d", node->data.counter);
-    render_text_format(x + PADDING, y + PADDING + 3*20, 2, color_white, "reads: %d", node->reads);
-    render_text_format(x + PADDING, y + PADDING + 4*20, 2, color_white, "writes: %d", node->writes);
+    render_text_format(x + PADDING, y + PADDING + 1*20, 2, color_white, "id: %u", node->id);
+    render_text_format(x + PADDING, y + PADDING + 2*20, 2, color_white, "counter: %u", node->data.counter);
+    render_text_format(x + PADDING, y + PADDING + 3*20, 2, color_white, "reads: %u", node->reads);
+    render_text_format(x + PADDING, y + PADDING + 4*20, 2, color_white, "writes: %u", node->writes);
   }
 }

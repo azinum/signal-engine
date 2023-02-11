@@ -29,6 +29,7 @@ u32 colors[MAX_COLOR] = {
   [COLOR_CYAN]       = COLOR_RGB(0x55, 0xea, 0xea),
   [COLOR_YELLOW]     = COLOR_RGB(0xdc, 0xb7, 0x23),
   [COLOR_DARK_GREEN] = COLOR_RGB(0x23, 0xaa, 0x23),
+  [COLOR_TURQUOSE]   = COLOR_RGB(0x36, 0x77, 0x63),
 };
 
 Result renderer_init(u32 width, u32 height) {
@@ -50,7 +51,11 @@ void renderer_begin_frame(u32 background_color) {
   olivec_fill(renderer.oc, background_color);
 }
 
-void render_rect(i32 x, i32 y, i32 w, i32 h, u32 color) {
+void render_rect(i32 x, i32 y, i32 w, i32 h, u32 thickness, u32 color) {
+  olivec_frame(renderer.oc, x, y, w, h, thickness, color);
+}
+
+void render_fill_rect(i32 x, i32 y, i32 w, i32 h, u32 color) {
   olivec_rect(renderer.oc, x, y, w, h, color);
 }
 

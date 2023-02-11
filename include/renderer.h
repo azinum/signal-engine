@@ -18,6 +18,7 @@ typedef enum {
   COLOR_CYAN,
   COLOR_YELLOW,
   COLOR_DARK_GREEN,
+  COLOR_TURQUOSE,
 
   MAX_COLOR,
 } Color;
@@ -28,7 +29,9 @@ Result renderer_init(u32 width, u32 height);
 
 void renderer_begin_frame();
 
-void render_rect(i32 x, i32 y, i32 w, i32 h, u32 color);
+void render_rect(i32 x, i32 y, i32 w, i32 h, u32 thickness, u32 color);
+
+void render_fill_rect(i32 x, i32 y, i32 w, i32 h, u32 color);
 
 void render_text(i32 x, i32 y, u32 glyph_size, u32 color, char* text);
 
