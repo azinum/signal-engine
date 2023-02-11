@@ -195,12 +195,12 @@ u32 node_broadcast(Node* self, Node* input, Engine* e) {
 }
 
 u32 node_increment_writes(Node* node) {
-  node->color = color_white;
+  node->color = colors[COLOR_RED];
   return ++node->writes;
 }
 
 u32 node_increment_reads(Node* node) {
-  node->color = color_green;
+  node->color = colors[COLOR_GREEN];
   return ++node->reads;
 }
 
@@ -319,14 +319,13 @@ void nodes_update_and_render(Engine* e) {
       render_fill_rect(node->box.x, node->box.y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
       continue;
     }
-    node->target_color = colors[node_type_color[node->type]];
     node->color = color_lerp(node->color, node->target_color, e->state.dt * 10.0f);
 
     if (node == hover) {
-      node->color = color_lerp(node->target_color, color_white, 0.4f);
+      node->color = color_lerp(node->target_color, color_white, 1.0f);
     }
-    render_fill_rect(node->box.x, node->box.y, node->box.w, node->box.h, node->color);
-    render_text_format(node->box.x + 2, node->box.y + 2, 2, color_white, "%.*s", 1, node_type_str[node->type]);
+    render_sprite_from_id(node->box.x, node->box.y, node->box.w, node->box.h, (Sprite_id)node->type);
+    render_rect(node->box.x, node->box.y, node->box.w, node->box.h, BORDER_THICKNESS, node->color);
   }
 
   node_render_info_box(e, hover);
@@ -348,5 +347,12 @@ void node_render_info_box(Engine* e, Node* node) {
     render_text_format(x + PADDING, y + PADDING + 2*20, 2, color_white, "counter: %u", node->data.counter);
     render_text_format(x + PADDING, y + PADDING + 3*20, 2, color_white, "reads: %u", node->reads);
     render_text_format(x + PADDING, y + PADDING + 4*20, 2, color_white, "writes: %u", node->writes);
+    render_sprite_from_id(x + PADDING, y + PADDING + 5*20, 84, 84, (Sprite_id)node->type);
+    render_rect(x + PADDING, y + PADDING + 5*20, 84, 84, BORDER_THICKNESS, color_white);
+  }
+  if (copy) {
+    render_text_format(x + PADDING, y + PADDING + 11*20, 2, color_white, "clipboard");
+    render_sprite_from_id(x + PADDING, y + PADDING + 12*20, 84, 84, (Sprite_id)copy->type);
+    render_rect(x + PADDING, y + PADDING + 12*20, 84, 84, BORDER_THICKNESS, color_white);
   }
 }

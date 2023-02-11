@@ -58,14 +58,14 @@ defer:
 
 Result pixels2c(FILE* fp, u32* data, i32 x, i32 y, const char* name) {
   Result result = Ok;
-  fprintf(fp, "u32 %s_width = %d;\n", name, x);
-  fprintf(fp, "u32 %s_height = %d;\n", name, x);
+  fprintf(fp, "const u32 %s_width = %d;\n", name, x);
+  fprintf(fp, "const u32 %s_height = %d;\n", name, x);
   fprintf(fp, "u32 %s_pixels[] = {\n", name);
   const u32 WIDTH = 8;
   u32 index = 0;
   for (u32 py = 0; py < y; ++py) {
     for (u32 px = 0; px < y; ++px) {
-      fprintf(fp, "0x%8x,", data[index]);
+      fprintf(fp, "0x%08x,", data[index]);
       ++index;
       if (!(index % WIDTH)) {
         fprintf(fp, "\n");

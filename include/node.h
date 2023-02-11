@@ -25,16 +25,6 @@ const char* node_type_str[MAX_NODE_TYPE] = {
   [NODE_INCR]  = "incr",
 };
 
-const u32 node_type_color[MAX_NODE_TYPE] = {
-  COLOR_GRAY,
-  COLOR_RED,
-  COLOR_BLUE,
-  COLOR_PURPLE,
-  COLOR_DARK_GREEN,
-  COLOR_YELLOW,
-  COLOR_TURQUOSE,
-};
-
 typedef union {
   struct {
     u16 counter;

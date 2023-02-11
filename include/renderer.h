@@ -25,6 +25,18 @@ typedef enum {
 
 extern u32 colors[MAX_COLOR];
 
+typedef enum {
+  SPRITE_NODE_NONE = 0,
+  SPRITE_NODE_CLOCK,
+  SPRITE_NODE_ADDER,
+  SPRITE_NODE_IO,
+  SPRITE_NODE_AND,
+  SPRITE_NODE_PRINT,
+  SPRITE_NODE_INCR,
+
+  MAX_SPRITE,
+} Sprite_id;
+
 Result renderer_init(u32 width, u32 height);
 
 void renderer_begin_frame();
@@ -34,6 +46,10 @@ void render_rect(i32 x, i32 y, i32 w, i32 h, u32 thickness, u32 color);
 void render_fill_rect(i32 x, i32 y, i32 w, i32 h, u32 color);
 
 void render_text(i32 x, i32 y, u32 glyph_size, u32 color, char* text);
+
+void render_sprite_from_id(i32 x, i32 y, i32 w, i32 h, Sprite_id id);
+
+void render_sprite(i32 x, i32 y, i32 w, i32 h, u32* pixels, u32 width, u32 height);
 
 void render_text_format(i32 x, i32 y, u32 glyph_size, u32 color, char* format, ...);
 

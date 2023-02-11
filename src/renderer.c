@@ -14,6 +14,22 @@ struct {
   char text_buffer[TEXT_BUFFER_SIZE];
 } renderer;
 
+typedef struct Sprite {
+  u32* pixels;
+  u32 width;
+  u32 height;
+} Sprite;
+
+static const Sprite sprites[MAX_SPRITE] = {
+  [SPRITE_NODE_NONE]  = { .pixels = node_none_pixels, .width = node_none_width, .height = node_none_height, },
+  [SPRITE_NODE_CLOCK] = { .pixels = node_clock_pixels, .width = node_clock_width, .height = node_clock_height, },
+  [SPRITE_NODE_ADDER] = { .pixels = node_adder_pixels, .width = node_adder_width, .height = node_adder_height, },
+  [SPRITE_NODE_IO]    = { .pixels = node_io_pixels, .width = node_io_width, .height = node_io_height, },
+  [SPRITE_NODE_AND]   = { .pixels = node_and_pixels, .width = node_and_width, .height = node_and_height, },
+  [SPRITE_NODE_PRINT] = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },
+  [SPRITE_NODE_INCR]  = { .pixels = node_incr_pixels, .width = node_incr_width, .height = node_incr_height, },
+};
+
 const u32 color_white = OLIVEC_RGBA(0xff, 0xff, 0xff, 0xff);
 const u32 color_black = OLIVEC_RGBA(0x00, 0x00, 0x00, 0xff);
 const u32 color_green = OLIVEC_RGBA(0x88, 0xff, 0x88, 0xff);
@@ -61,6 +77,25 @@ void render_fill_rect(i32 x, i32 y, i32 w, i32 h, u32 color) {
 
 void render_text(i32 x, i32 y, u32 glyph_size, u32 color, char* text) {
   olivec_text(renderer.oc, text, x, y, olivec_default_font, glyph_size, color);
+}
+
+void render_sprite(i32 x, i32 y, i32 w, i32 h, u32* pixels, u32 width, u32 height) {
+  Olivec_Canvas sprite = olivec_canvas(
+    pixels,
+    width,
+    height,
+    width
+  );
+  olivec_sprite_copy(renderer.oc, x, y, w, h, sprite);
+}
+
+void render_sprite_from_id(i32 x, i32 y, i32 w, i32 h, Sprite_id id) {
+  if (id >= 0 && id < MAX_SPRITE) {
+    const Sprite* sprite = &sprites[id];
+    if (sprite->pixels != NULL) {
+      render_sprite(x, y, w, h, sprite->pixels, sprite->width, sprite->height);
+    }
+  }
 }
 
 void render_text_format(i32 x, i32 y, u32 glyph_size, u32 color, char* format, ...) {
