@@ -11,8 +11,13 @@
 #include "camera.c"
 
 #define MAX_TITLE_LENGTH 64
-#define PROG_NAME "Signals"
+#define PROG_NAME "Signal Engine"
 #define BPM 120.0f
+
+i32 saved_mouse_x = 0;
+i32 saved_mouse_y = 0;
+i32 saved_camera_x = 0;
+i32 saved_camera_y = 0;
 
 static void signal_state_init(State* state);
 static void signal_engine_init(Engine* state);
@@ -49,61 +54,71 @@ i32 signal_engine_start(i32 argc, char** argv) {
     u32 current = prev;
 
     while (platform_pollevents() == Ok) {
+      current = platform_get_ticks();
+      state->dt = (current - prev) * 0.001f;
+      prev = current;
+      if (state->dt > DT_MAX) {
+        state->dt = DT_MAX;
+      }
       if (!state->paused) {
-        current = platform_get_ticks();
-        state->dt = (current - prev) * 0.001f;
-        prev = current;
-        if (state->dt > DT_MAX) {
-          state->dt = DT_MAX;
-        }
         state->timer += state->dt;
       }
 
-      if (key_pressed[KEY_1]) {
-        state->bpm -= 10;
+      if (key_mod_ctrl) {
+        if (key_pressed[KEY_Q]) {
+          signal_state_init(state);
+        }
+        if (key_pressed[KEY_S]) {
+          signal_engine_state_store(STATE_PATH, state);
+        }
+        if (key_pressed[KEY_R]) {
+          signal_engine_state_load(STATE_PATH, state);
+        }
       }
-      if (key_pressed[KEY_2]) {
-        state->bpm += 10;
-      }
-      if (key_pressed[KEY_Q] && key_mod_ctrl) {
-        signal_state_init(state);
-        continue;
-      }
-      if (key_pressed[KEY_S] && key_mod_ctrl) {
-        signal_engine_state_store(STATE_PATH, state);
-        continue;
-      }
-      if (key_pressed[KEY_R] && key_mod_ctrl) {
-        signal_engine_state_load(STATE_PATH, state);
-        continue;
-      }
-      if (key_pressed[KEY_SPACE]) {
-        state->paused = !state->paused;
-      }
-      if (key_pressed[KEY_M]) {
-        engine.show_info_box = !engine.show_info_box;
-      }
+      else {
+        if (key_pressed[KEY_SPACE]) {
+          state->paused = !state->paused;
+        }
+        if (key_pressed[KEY_M]) {
+          engine.show_info_box = !engine.show_info_box;
+        }
+        if (key_pressed[KEY_1]) {
+          state->bpm -= 10;
+        }
+        if (key_pressed[KEY_2]) {
+          state->bpm += 10;
+        }
 
-      if (!key_mod_ctrl) {
         if (key_down[KEY_W]) {
-          state->camera.y_pos -= CAMERA_SPEED * state->dt;
+          state->camera.target_y-= CAMERA_SPEED * state->dt;
         }
         if (key_down[KEY_S]) {
-          state->camera.y_pos += CAMERA_SPEED * state->dt;
+          state->camera.target_y += CAMERA_SPEED * state->dt;
         }
         if (key_down[KEY_A]) {
-          state->camera.x_pos -= CAMERA_SPEED * state->dt;
+          state->camera.target_x -= CAMERA_SPEED * state->dt;
         }
         if (key_down[KEY_D]) {
-          state->camera.x_pos += CAMERA_SPEED * state->dt;
+          state->camera.target_x += CAMERA_SPEED * state->dt;
         }
+      }
+
+      if (mouse_pressed[MOUSE_BUTTON_MIDDLE]) {
+        saved_camera_x = state->camera.target_x;
+        saved_camera_y = state->camera.target_y;
+        saved_mouse_x = mouse_x;
+        saved_mouse_y = mouse_y;
+      }
+      else if (mouse_down[MOUSE_BUTTON_MIDDLE]) {
+        state->camera.target_x = state->camera.x = saved_camera_x - (mouse_x - saved_mouse_x);
+        state->camera.target_y = state->camera.y = saved_camera_y - (mouse_y - saved_mouse_y);
       }
 
       camera_update(&engine, &state->camera);
 
       renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
 
-      if (!(state->tick % 32)) {
+      if (!(state->tick % 16)) {
         snprintf(title, MAX_TITLE_LENGTH, "%s | %.4g bpm | %d fps | %.3g delta", PROG_NAME, state->bpm, (u32)(1.0f / state->dt), state->dt);
         platform_set_title(title);
       }

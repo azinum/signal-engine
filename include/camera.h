@@ -9,8 +9,8 @@
 typedef struct {
   f32 x;
   f32 y;
-  f32 x_pos;
-  f32 y_pos;
+  f32 target_x;
+  f32 target_y;
 } Camera;
 
 struct Engine;

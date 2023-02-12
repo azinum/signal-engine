@@ -1,4 +1,6 @@
-# Signal Engine Instruction Set
+# Signal Engine
+
+## Instructions
 
 | Instruction | Description                                                                      | Reads  | Writes |
 | ----------- | -------------------------------------------------------------------------------- | ------ | ------ |

@@ -1,13 +1,13 @@
 // node.c
 
-#define BORDER_THICKNESS 2
+#define BORDER_THICKNESS 3
 
 #define MAX_NEIGHBOUR 4
 #define MAX_READS 4
 #define MAX_WRITES 4
 
-Node copy_data;
-Node* copy = NULL;
+static Node copy_data;
+static Node* copy = NULL;
 
 static Node* node_from_grid_pos(Engine* e, u32 x, u32 y);
 static Result id_to_grid_pos(Node* node, u32* x, u32* y);

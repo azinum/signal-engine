@@ -16,7 +16,7 @@ TARGETS=main png2c
 	${CC} $< -o signal_engine ${CFLAGS} ${CFLAGS_COMMON} ${PKG_LIBS} ${PKG_CFLAGS}
 
 %: tools/%.c
-	${CC} $< -o $@ ${CFLAGS_COMMON} ${shell head $< -n 1 | grep -oP '(?<=C_FLAGS: ).*'}
+	${CC} $< -o $@ ${CFLAGS_COMMON} -Iinclude -lm
 
 all: ${TARGETS}
 #	${CC} src/main.c -o signals ${CFLAGS} ${PKG_LIBS} ${PKG_CFLAGS}
