@@ -13,20 +13,22 @@ typedef enum {
   NODE_INCR,
   NODE_NOT,
   NODE_COPY,
+  NODE_EQUALS,
 
   MAX_NODE_TYPE,
 } Node_type;
 
 const char* node_type_str[MAX_NODE_TYPE] = {
-  [NODE_NONE]  = "none",
-  [NODE_CLOCK] = "clock",
-  [NODE_ADD]   = "add",
-  [NODE_IO]    = "io",
-  [NODE_AND]   = "and",
-  [NODE_PRINT] = "print",
-  [NODE_INCR]  = "incr",
-  [NODE_NOT]   = "not",
-  [NODE_COPY]  = "copy",
+  [NODE_NONE]   = "none",
+  [NODE_CLOCK]  = "clock",
+  [NODE_ADD]    = "add",
+  [NODE_IO]     = "io",
+  [NODE_AND]    = "and",
+  [NODE_PRINT]  = "print",
+  [NODE_INCR]   = "incr",
+  [NODE_NOT]    = "not",
+  [NODE_COPY]   = "copy",
+  [NODE_EQUALS] = "equals",
 };
 
 typedef union {

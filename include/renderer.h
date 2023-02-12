@@ -3,10 +3,6 @@
 #ifndef _RENDERER_H
 #define _RENDERER_H
 
-extern const u32 color_white;
-extern const u32 color_black;
-extern const u32 color_green;
-
 typedef enum {
   COLOR_WHITE,
   COLOR_BLACK,
@@ -35,6 +31,7 @@ typedef enum {
   SPRITE_NODE_INCR,
   SPRITE_NODE_NOT,
   SPRITE_NODE_COPY,
+  SPRITE_NODE_EQUALS,
 
   MAX_SPRITE,
 } Sprite_id;

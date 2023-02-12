@@ -16,8 +16,10 @@ static void node_copy(Node* dest, Node* src);
 
 // broadcast to neighbours
 static u32 node_broadcast(Node* node, Node* input, Engine* e);
-static u16 node_increment_writes(Node* node);
-static u16 node_increment_reads(Node* node);
+static u16 node_increment_writes(Node* self);
+static u16 node_increment_reads(Node* self);
+static u32 node_safe_guard(Node* self);
+static u32 node_finalize(Node* self);
 
 static void node_event_callback(Node* node, Node* input, Engine* e);
 
@@ -30,19 +32,50 @@ static void node_event_print(Node* self, Node* input, Engine* e);
 static void node_event_incr(Node* self, Node* input, Engine* e);
 static void node_event_not(Node* self, Node* input, Engine* e);
 static void node_event_copy(Node* self, Node* input, Engine* e);
+static void node_event_equals(Node* self, Node* input, Engine* e);
 
 static void node_broadcast_event_copy(Node* self, Node* input, Engine* e);
 
+/*
+
+prepare_node_event(self)
+  return self.ready && self.reads <= event.reads && self.writes <= MAX_WRITES
+
+finalize_node_event(self)
+  if self.reads >= event.reads || self.writes >= MAX_WRITES
+    self.ready = false
+
+node_event_*()
+  if !prepare_node_event() // safe guard
+    return
+
+  /// do work
+
+  finalize_node_event()
+
+node_event()
+  if reads == node_event.reads
+     self.ready = false // operation complete
+
+nodes_update()
+  for node in nodes
+     if beat && node.ready == false
+       node.reads = 0
+       node.writes = 0
+       node.ready = true
+*/
+
 static Node_event node_events[MAX_NODE_TYPE] = {
-  [NODE_NONE]  = { .event = node_event_none,  .broadcast = NULL, .reads = 0, },
-  [NODE_CLOCK] = { .event = node_event_clock, .broadcast = NULL, .reads = 0, },
-  [NODE_ADD]   = { .event = node_event_add,   .broadcast = NULL, .reads = 2, },
-  [NODE_IO]    = { .event = node_event_io,    .broadcast = NULL, .reads = 1, },
-  [NODE_AND]   = { .event = node_event_and,   .broadcast = NULL, .reads = 2, },
-  [NODE_PRINT] = { .event = node_event_print, .broadcast = NULL, .reads = 1, },
-  [NODE_INCR]  = { .event = node_event_incr,  .broadcast = NULL, .reads = 1, },
-  [NODE_NOT]   = { .event = node_event_not,   .broadcast = NULL, .reads = 1, },
-  [NODE_COPY]  = { .event = node_event_copy,  .broadcast = node_broadcast_event_copy, .reads = 1, },
+  [NODE_NONE]   = { .event = node_event_none,   .broadcast = NULL, .reads = 0, },
+  [NODE_CLOCK]  = { .event = node_event_clock,  .broadcast = NULL, .reads = 0, },
+  [NODE_ADD]    = { .event = node_event_add,    .broadcast = NULL, .reads = 2, },
+  [NODE_IO]     = { .event = node_event_io,     .broadcast = NULL, .reads = 1, },
+  [NODE_AND]    = { .event = node_event_and,    .broadcast = NULL, .reads = 2, },
+  [NODE_PRINT]  = { .event = node_event_print,  .broadcast = NULL, .reads = 1, },
+  [NODE_INCR]   = { .event = node_event_incr,   .broadcast = NULL, .reads = 1, },
+  [NODE_NOT]    = { .event = node_event_not,    .broadcast = NULL, .reads = 1, },
+  [NODE_COPY]   = { .event = node_event_copy,   .broadcast = node_broadcast_event_copy, .reads = 1, },
+  [NODE_EQUALS] = { .event = node_event_equals, .broadcast = NULL, .reads = 2, },
 };
 
 void node_event_callback(Node* node, Node* input, Engine* e) {
@@ -64,49 +97,52 @@ void node_event_callback(Node* node, Node* input, Engine* e) {
 }
 
 void node_event_none(Node* self, Node* input, Engine* e) {
-  (void)input; (void)e;
-  if (input) {
-    node_increment_reads(self);
+  if (!node_safe_guard(self)) {
+    return;
   }
+  node_increment_reads(self);
+  node_finalize(self);
 }
 
 void node_event_clock(Node* self, Node* input, Engine* e) {
-  if (input) {
+  if (!node_safe_guard(self)) {
     return;
   }
   self->data.value++;
   node_broadcast(self, input, e);
+  node_finalize(self);
 }
 
 void node_event_add(Node* self, Node* input, Engine* e) {
-  if (!input) {
+  if (!node_safe_guard(self)) {
     return;
   }
+
   u16 reads = node_increment_reads(self);
   self->data.value += input->data.value;
   if (reads == 2) {
     node_broadcast(self, input, e);
-    self->ready = false; // operation complete
-    return;
   }
   else if (reads > 2) {
     assert(0);
   }
+  node_finalize(self);
 }
 
 void node_event_io(Node* self, Node* input, Engine* e) {
+  if (!node_safe_guard(self)) {
+    return;
+  }
   if (input) {
     node_increment_reads(self);
     self->data = input->data;
   }
   node_broadcast(self, input, e);
+  node_finalize(self);
 }
 
 void node_event_and(Node* self, Node* input, Engine* e) {
-  if (!input) {
-    return;
-  }
-  if (!input->ready) {
+  if (!node_safe_guard(self)) {
     return;
   }
   u16 reads = node_increment_reads(self);
@@ -118,47 +154,79 @@ void node_event_and(Node* self, Node* input, Engine* e) {
     if (self->data.value) {
       node_broadcast(self, input, e);
     }
-    self->ready = false; // operation complete
   }
   else {
     assert(0);
   }
+  node_finalize(self);
 }
 
 void node_event_print(Node* self, Node* input, Engine* e) {
-  if (!input) {
+  if (!node_safe_guard(self)) {
     return;
   }
-  node_increment_reads(self);
-  self->data = input->data;
-  printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.value);
+  if (input) {
+    node_increment_reads(self);
+    self->data = input->data;
+    printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.value);
+  }
+  node_finalize(self);
 }
 
 void node_event_incr(Node* self, Node* input, Engine* e) {
-  if (!input) {
+  if (!node_safe_guard(self)) {
     return;
   }
-  node_increment_reads(self);
-  self->data.value += input->data.value;
-  node_broadcast(self, input, e);
+  if (input) {
+    node_increment_reads(self);
+    self->data.value += input->data.value;
+    node_broadcast(self, input, e);
+  }
+  node_finalize(self);
 }
 
 void node_event_not(Node* self, Node* input, Engine* e) {
-  if (!input) {
+  if (!node_safe_guard(self)) {
     return;
   }
-  node_increment_reads(self);
-  self->data.value = !input->data.value;
-  node_broadcast(self, input, e);
+  if (input) {
+    node_increment_reads(self);
+    self->data.value = !input->data.value;
+    node_broadcast(self, input, e);
+  }
+  node_finalize(self);
 }
 
 void node_event_copy(Node* self, Node* input, Engine* e) {
-  if (!input) {
+  if (!node_safe_guard(self)) {
     return;
   }
-  node_increment_reads(self);
-  self->data.value = input->data.value;
-  node_broadcast(self, input, e);
+  if (input) {
+    node_increment_reads(self);
+    self->data.value = input->data.value;
+    node_broadcast(self, input, e);
+  }
+  node_finalize(self);
+}
+
+void node_event_equals(Node* self, Node* input, Engine* e) {
+  if (!node_safe_guard(self)) {
+    return;
+  }
+  if (input) {
+  u16 reads = node_increment_reads(self);
+    if (reads == 1) {
+      self->data.value = input->data.value;
+    }
+    else if (reads == 2) {
+      self->data.value = self->data.value == input->data.value;
+      node_broadcast(self, input, e);
+    }
+    else {
+      assert(0);
+    }
+  }
+  node_finalize(self);
 }
 
 void node_broadcast_event_copy(Node* self, Node* input, Engine* e) {
@@ -260,24 +328,34 @@ u32 node_broadcast(Node* self, Node* input, Engine* e) {
   return count;
 }
 
-u16 node_increment_writes(Node* node) {
-  u16 writes = ++node->writes;
-  if (writes >= MAX_WRITES) {
-    node->ready = false;
-    return 0;
-  }
-  node->color = colors[COLOR_RED];
+u16 node_increment_writes(Node* self) {
+  u16 writes = ++self->writes;
+  self->color = colors[COLOR_RED];
   return writes;
 }
 
-u16 node_increment_reads(Node* node) {
-  u16 reads = ++node->reads;
-  if (reads >= MAX_READS) {
-    node->ready = false;
-    return 0;
-  }
-  node->color = colors[COLOR_GREEN];
+u16 node_increment_reads(Node* self) {
+  u16 reads = ++self->reads;
+  self->color = colors[COLOR_GREEN];
   return reads;
+}
+
+u32 node_safe_guard(Node* self) {
+  assert(self->type < MAX_NODE_TYPE);
+  Node_event* event = &node_events[self->type];
+  if (event->reads == 0) {
+    return self->ready && self->writes < MAX_WRITES;
+  }
+  return self->ready && self->reads < event->reads && self->writes < MAX_WRITES;
+}
+
+u32 node_finalize(Node* self) {
+  assert(self->type < MAX_NODE_TYPE);
+  Node_event* event = &node_events[self->type];
+  if (self->reads >= event->reads || self->writes >= MAX_WRITES) {
+    self->ready = false; // we're done processing this node
+  }
+  return 0;
 }
 
 void node_init(Node* node, Box box, Node_type type) {
@@ -287,9 +365,9 @@ void node_init(Node* node, Box box, Node_type type) {
   node->alive = true;
   node->reads = 0;
   node->writes = 0;
-  node->ready = false;
-  node->color = color_black;
-  node->target_color = color_black;
+  node->ready = true;
+  node->color = colors[COLOR_BLACK];
+  node->target_color = colors[COLOR_BLACK];
 }
 
 void node_reset(Node* node) {
@@ -327,8 +405,8 @@ void nodes_update_and_render(Engine* e) {
   // make nodes ready
   for (u32 i = 0; i < MAX_NODE; ++i) {
     Node* node = &e->state.nodes[i];
-    node->ready = true;
-    if (beat) {
+    if (!node->ready && beat) {
+      node->ready = true;
       node->reads = 0;
       node->writes = 0;
     }
@@ -374,6 +452,7 @@ void nodes_update_and_render(Engine* e) {
       continue;
     }
     if (beat && node->type == NODE_CLOCK) {
+      node->ready = true;
       node_event_callback(node, NULL, e);
     }
   }
@@ -410,7 +489,7 @@ void nodes_update_and_render(Engine* e) {
     node->color = color_lerp(node->color, node->target_color, e->state.dt * 10.0f);
 
     if (node == hover) {
-      node->color = color_lerp(node->target_color, color_white, 1.0f);
+      node->color = color_lerp(node->target_color, colors[COLOR_WHITE], 1.0f);
     }
     render_sprite_from_id(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, (Sprite_id)node->type);
     render_rect(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, BORDER_THICKNESS, node->color);
@@ -434,20 +513,20 @@ void node_render_info_box(Engine* e, Node* node) {
   const u32 box_h = height - (2 * PADDING);
   render_fill_rect(618, 2, box_w, box_h, color_rgb(0x15, 0x16, 0x20));
   if (node) {
-    render_text_format(x + PADDING, y + PADDING + 0*20, 2, color_white, "type: %s", node_type_str[node->type], node->id);
-    render_text_format(x + PADDING, y + PADDING + 1*20, 2, color_white, "id: %u", node->id);
-    render_text_format(x + PADDING, y + PADDING + 2*20, 2, color_white, "value: %u", node->data.value);
-    render_text_format(x + PADDING, y + PADDING + 3*20, 2, color_white, "reads: %u", node->reads);
-    render_text_format(x + PADDING, y + PADDING + 4*20, 2, color_white, "writes: %u", node->writes);
+    render_text_format(x + PADDING, y + PADDING + 0*20, 2, colors[COLOR_WHITE], "type: %s", node_type_str[node->type], node->id);
+    render_text_format(x + PADDING, y + PADDING + 1*20, 2, colors[COLOR_WHITE], "id: %u", node->id);
+    render_text_format(x + PADDING, y + PADDING + 2*20, 2, colors[COLOR_WHITE], "value: %u", node->data.value);
+    render_text_format(x + PADDING, y + PADDING + 3*20, 2, colors[COLOR_WHITE], "reads: %u", node->reads);
+    render_text_format(x + PADDING, y + PADDING + 4*20, 2, colors[COLOR_WHITE], "writes: %u", node->writes);
     render_sprite_from_id(x + PADDING, y + PADDING + 5*20, 84, 84, (Sprite_id)node->type);
-    render_rect(x + PADDING, y + PADDING + 5*20, 84, 84, BORDER_THICKNESS, color_white);
+    render_rect(x + PADDING, y + PADDING + 5*20, 84, 84, BORDER_THICKNESS, colors[COLOR_WHITE]);
   }
   if (copy) {
-    render_text_format(x + PADDING, y + PADDING + 11*20, 2, color_white, "clipboard");
+    render_text_format(x + PADDING, y + PADDING + 11*20, 2, colors[COLOR_WHITE], "clipboard");
     render_sprite_from_id(x + PADDING, y + PADDING + 12*20, 84, 84, (Sprite_id)copy->type);
-    render_rect(x + PADDING, y + PADDING + 12*20, 84, 84, BORDER_THICKNESS, color_white);
+    render_rect(x + PADDING, y + PADDING + 12*20, 84, 84, BORDER_THICKNESS, colors[COLOR_WHITE]);
   }
   if (e->state.paused) {
-    render_text_format(x + PADDING, height - 1*20, 2, color_white, "paused");
+    render_text_format(x + PADDING, height - 1*20, 2, colors[COLOR_WHITE], "paused");
   }
 }

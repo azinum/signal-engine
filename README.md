@@ -13,3 +13,4 @@
 | INCR        | Increment by the input and broadcast to neighbours                               | 0-4    | 0-4    |
 | NOT         | Logical NOT operation on one input and broadcast                                 | 1      | 0-4    |
 | COPY        | Copy the input into the output(s)                                                | 1      | 0-4    |
+| EQUALS      | Compare equality of two inputs and broadcast the result                          | 2      | 0-4    |
