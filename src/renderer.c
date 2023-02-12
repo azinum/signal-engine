@@ -29,6 +29,7 @@ static const Sprite sprites[MAX_SPRITE] = {
   [SPRITE_NODE_PRINT] = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },
   [SPRITE_NODE_INCR]  = { .pixels = node_incr_pixels, .width = node_incr_width, .height = node_incr_height, },
   [SPRITE_NODE_NOT]   = { .pixels = node_not_pixels, .width = node_not_width, .height = node_not_height, },
+  [SPRITE_NODE_COPY]  = { .pixels = node_copy_pixels, .width = node_copy_width, .height = node_copy_height, },
 };
 
 const u32 color_white = OLIVEC_RGBA(0xff, 0xff, 0xff, 0xff);

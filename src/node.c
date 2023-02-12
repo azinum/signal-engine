@@ -29,16 +29,20 @@ static void node_event_and(Node* self, Node* input, Engine* e);
 static void node_event_print(Node* self, Node* input, Engine* e);
 static void node_event_incr(Node* self, Node* input, Engine* e);
 static void node_event_not(Node* self, Node* input, Engine* e);
+static void node_event_copy(Node* self, Node* input, Engine* e);
+
+static void node_broadcast_event_copy(Node* self, Node* input, Engine* e);
 
 static Node_event node_events[MAX_NODE_TYPE] = {
-  [NODE_NONE]  = { .event = node_event_none,  .reads = 0, },
-  [NODE_CLOCK] = { .event = node_event_clock, .reads = 0, },
-  [NODE_ADD]   = { .event = node_event_add,   .reads = 2, },
-  [NODE_IO]    = { .event = node_event_io,    .reads = 1, },
-  [NODE_AND]   = { .event = node_event_and,   .reads = 2, },
-  [NODE_PRINT] = { .event = node_event_print, .reads = 1, },
-  [NODE_INCR]  = { .event = node_event_incr,  .reads = 1, },
-  [NODE_NOT]   = { .event = node_event_not,   .reads = 1, },
+  [NODE_NONE]  = { .event = node_event_none,  .broadcast = NULL, .reads = 0, },
+  [NODE_CLOCK] = { .event = node_event_clock, .broadcast = NULL, .reads = 0, },
+  [NODE_ADD]   = { .event = node_event_add,   .broadcast = NULL, .reads = 2, },
+  [NODE_IO]    = { .event = node_event_io,    .broadcast = NULL, .reads = 1, },
+  [NODE_AND]   = { .event = node_event_and,   .broadcast = NULL, .reads = 2, },
+  [NODE_PRINT] = { .event = node_event_print, .broadcast = NULL, .reads = 1, },
+  [NODE_INCR]  = { .event = node_event_incr,  .broadcast = NULL, .reads = 1, },
+  [NODE_NOT]   = { .event = node_event_not,   .broadcast = NULL, .reads = 1, },
+  [NODE_COPY]  = { .event = node_event_copy,  .broadcast = node_broadcast_event_copy, .reads = 1, },
 };
 
 void node_event_callback(Node* node, Node* input, Engine* e) {
@@ -148,6 +152,20 @@ void node_event_not(Node* self, Node* input, Engine* e) {
   node_broadcast(self, input, e);
 }
 
+void node_event_copy(Node* self, Node* input, Engine* e) {
+  if (!input) {
+    return;
+  }
+  node_increment_reads(self);
+  self->data.value = input->data.value;
+  node_broadcast(self, input, e);
+}
+
+void node_broadcast_event_copy(Node* self, Node* input, Engine* e) {
+  assert(self && input);
+  input->data.value = self->data.value;
+}
+
 Node* node_from_grid_pos(Engine* e, u32 x, u32 y) {
   Node* result = NULL;
   u32 index = y * NODE_GRID_WIDTH + x;
@@ -220,6 +238,10 @@ u32 node_broadcast(Node* self, Node* input, Engine* e) {
   if (!self->ready) {
     return 0;
   }
+  assert(self->type < MAX_NODE_TYPE);
+
+  Node_event* event = &node_events[self->type];
+
   u32 count = 0;
   Node* neighbours[MAX_NEIGHBOUR] = {NULL};
   assert(self != NULL);
@@ -230,6 +252,9 @@ u32 node_broadcast(Node* self, Node* input, Engine* e) {
       continue;
     }
     node_increment_writes(self);
+    if (event->broadcast) {
+      event->broadcast(self, n, e);
+    }
     node_event_callback(n, self, e);
   }
   return count;

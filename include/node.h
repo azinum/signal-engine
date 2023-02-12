@@ -12,6 +12,7 @@ typedef enum {
   NODE_PRINT,
   NODE_INCR,
   NODE_NOT,
+  NODE_COPY,
 
   MAX_NODE_TYPE,
 } Node_type;
@@ -25,6 +26,7 @@ const char* node_type_str[MAX_NODE_TYPE] = {
   [NODE_PRINT] = "print",
   [NODE_INCR]  = "incr",
   [NODE_NOT]   = "not",
+  [NODE_COPY]  = "copy",
 };
 
 typedef union {
@@ -49,10 +51,12 @@ typedef struct {
 struct Engine;
 struct State;
 
-typedef void (*node_event)(Node* self, Node* input, struct Engine*);
+typedef void (*broadcast_event)(Node* self, Node* input, struct Engine* e);
+typedef void (*node_event)(Node* self, Node* input, struct Engine* e);
 
 typedef struct {
   node_event event;
+  broadcast_event broadcast;
   u32 reads;
 } Node_event;
 

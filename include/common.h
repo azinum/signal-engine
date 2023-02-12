@@ -29,6 +29,10 @@ typedef enum { Ok, Err, Done, } Result;
 #define true 1
 #define false 0
 
+#if RELEASE
+  #define assert(N)
+#endif
+
 const char* true_str[] = { "false", "true" };
 
 #define format_buffer(BUFFER_NAME, BUFFER_SIZE, FMT_STRING, ...) \
