@@ -23,7 +23,7 @@ typedef struct Sprite {
 static const Sprite sprites[MAX_SPRITE] = {
   [SPRITE_NODE_NONE]  = { .pixels = node_none_pixels, .width = node_none_width, .height = node_none_height, },
   [SPRITE_NODE_CLOCK] = { .pixels = node_clock_pixels, .width = node_clock_width, .height = node_clock_height, },
-  [SPRITE_NODE_ADDER] = { .pixels = node_adder_pixels, .width = node_adder_width, .height = node_adder_height, },
+  [SPRITE_NODE_ADD]   = { .pixels = node_add_pixels, .width = node_add_width, .height = node_add_height, },
   [SPRITE_NODE_IO]    = { .pixels = node_io_pixels, .width = node_io_width, .height = node_io_height, },
   [SPRITE_NODE_AND]   = { .pixels = node_and_pixels, .width = node_and_width, .height = node_and_height, },
   [SPRITE_NODE_PRINT] = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },

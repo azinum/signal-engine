@@ -49,6 +49,8 @@ typedef struct {
 
 #define BOX(X, Y, W, H) (Box) { .x = X, .y = Y, .w = W, .h = H, }
 
+#define UNIMPLEMENTED() do { printf("%s:%s:%d: not implemented yet\n", __FILE__, __FUNCTION__, __LINE__); assert(0); } while (0)
+
 void buffer_init(Buffer* buffer);
 
 void buffer_init_new(Buffer* buffer, u32 size);

@@ -1,9 +1,9 @@
 // assets.h
 #ifndef _ASSETS_H
 #define _ASSETS_H
-const u32 node_adder_width = 32;
-const u32 node_adder_height = 32;
-u32 node_adder_pixels[] = {
+const u32 node_add_width = 32;
+const u32 node_add_height = 32;
+u32 node_add_pixels[] = {
 0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,
 0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,
 0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,0xff000000,

@@ -5,12 +5,12 @@
 
 typedef enum {
   NODE_NONE = 0,
-  NODE_CLOCK, // increments an internal counter and tells the neighbours
-  NODE_ADDER, // add inputs from other nodes
-  NODE_IO,  // when reciving input, send output
-  NODE_AND, // ands inputs together, tell the neighbours if the result is non-zero, then reset the node to zero
-  NODE_PRINT, // print the value(s) that this node recieved
-  NODE_INCR, // add one input and send one output
+  NODE_CLOCK,
+  NODE_ADD,
+  NODE_IO,
+  NODE_AND,
+  NODE_PRINT,
+  NODE_INCR,
 
   MAX_NODE_TYPE,
 } Node_type;
@@ -18,7 +18,7 @@ typedef enum {
 const char* node_type_str[MAX_NODE_TYPE] = {
   [NODE_NONE]  = "none",
   [NODE_CLOCK] = "clock",
-  [NODE_ADDER] = "adder",
+  [NODE_ADD]   = "add",
   [NODE_IO]    = "io",
   [NODE_AND]   = "and",
   [NODE_PRINT] = "print",
@@ -27,7 +27,7 @@ const char* node_type_str[MAX_NODE_TYPE] = {
 
 typedef union {
   struct {
-    u16 counter;
+    u16 value;
   };
 } Node_data;
 

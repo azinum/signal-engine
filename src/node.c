@@ -1,8 +1,8 @@
 // node.c
 
-#define MAX_NEIGHBOUR 4
 #define BORDER_THICKNESS 2
 
+#define MAX_NEIGHBOUR 4
 #define MAX_READS 4
 #define MAX_WRITES 4
 
@@ -19,72 +19,76 @@ static u32 node_broadcast(Node* node, Node* input, Engine* e);
 static u16 node_increment_writes(Node* node);
 static u16 node_increment_reads(Node* node);
 
-static void event_callback(Node* node, Node* input, Engine* e);
+static void node_event_callback(Node* node, Node* input, Engine* e);
 
-static void event_none(Node* self, Node* input, Engine* e);
-static void event_clock(Node* self, Node* input, Engine* e);
-static void event_adder(Node* self, Node* input, Engine* e);
-static void event_io(Node* self, Node* input, Engine* e);
-static void event_and(Node* self, Node* input, Engine* e);
-static void event_print(Node* self, Node* input, Engine* e);
-static void event_incr(Node* self, Node* input, Engine* e);
+static void node_event_none(Node* self, Node* input, Engine* e);
+static void node_event_clock(Node* self, Node* input, Engine* e);
+static void node_event_add(Node* self, Node* input, Engine* e);
+static void node_event_io(Node* self, Node* input, Engine* e);
+static void node_event_and(Node* self, Node* input, Engine* e);
+static void node_event_print(Node* self, Node* input, Engine* e);
+static void node_event_incr(Node* self, Node* input, Engine* e);
 
 static Node_event node_events[MAX_NODE_TYPE] = {
-  { .event = event_none,  .reads = 0, },
-  { .event = event_clock, .reads = 0, },
-  { .event = event_adder, .reads = 2, },
-  { .event = event_io,    .reads = 1, },
-  { .event = event_and,   .reads = 2, },
-  { .event = event_print, .reads = 1, },
-  { .event = event_incr, .reads = 1, },
+  [NODE_NONE]  = { .event = node_event_none,  .reads = 0, },
+  [NODE_CLOCK] = { .event = node_event_clock, .reads = 0, },
+  [NODE_ADD]   = { .event = node_event_add,   .reads = 2, },
+  [NODE_IO]    = { .event = node_event_io,    .reads = 1, },
+  [NODE_AND]   = { .event = node_event_and,   .reads = 2, },
+  [NODE_PRINT] = { .event = node_event_print, .reads = 1, },
+  [NODE_INCR]  = { .event = node_event_incr,  .reads = 1, },
 };
 
-void event_callback(Node* node, Node* input, Engine* e) {
+void node_event_callback(Node* node, Node* input, Engine* e) {
   if (!node) {
     return;
   }
   if (!node->ready) {
     return;
   }
-  if (node->reads < MAX_READS && node->type < MAX_NODE_TYPE) {
-    Node_event* event = &node_events[node->type];
+  assert(node->type < MAX_NODE_TYPE);
+  Node_event* event = &node_events[node->type];
+  if (node->reads < event->reads && node->writes < MAX_WRITES) {
     event->event(node, input, e);
-    if (node->reads >= event->reads) {
-      node->reads = 0;
-      node->writes = 0;
-      node->ready = false; // need to wait for the next frame to be able to execute more events, to prevent infinite loops
-    }
+    return;
+  }
+  if (event->reads == 0 && node->writes < MAX_WRITES) {
+    event->event(node, NULL, e);
   }
 }
 
-void event_none(Node* self, Node* input, Engine* e) {
-  (void)self;
-  (void)input;
-  (void)e;
+void node_event_none(Node* self, Node* input, Engine* e) {
+  (void)input; (void)e;
   if (input) {
     node_increment_reads(self);
   }
 }
 
-void event_clock(Node* self, Node* input, Engine* e) {
+void node_event_clock(Node* self, Node* input, Engine* e) {
   if (input) {
     return;
   }
-  self->data.counter++;
+  self->data.value++;
   node_broadcast(self, input, e);
 }
 
-void event_adder(Node* self, Node* input, Engine* e) {
+void node_event_add(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
-  self->data.counter += input->data.counter;
-  if (node_increment_reads(self) == 2) {
+  u16 reads = node_increment_reads(self);
+  self->data.value += input->data.value;
+  if (reads == 2) {
     node_broadcast(self, input, e);
+    self->ready = false; // operation complete
+    return;
+  }
+  else if (reads > 2) {
+    assert(0);
   }
 }
 
-void event_io(Node* self, Node* input, Engine* e) {
+void node_event_io(Node* self, Node* input, Engine* e) {
   if (input) {
     node_increment_reads(self);
     self->data = input->data;
@@ -92,7 +96,7 @@ void event_io(Node* self, Node* input, Engine* e) {
   node_broadcast(self, input, e);
 }
 
-void event_and(Node* self, Node* input, Engine* e) {
+void node_event_and(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
@@ -100,31 +104,36 @@ void event_and(Node* self, Node* input, Engine* e) {
     return;
   }
   u16 reads = node_increment_reads(self);
-  self->data.counter += input->data.counter != 0;
-  if (reads == 2) {
-    if (self->data.counter == 2) {
-      self->data.counter = 1;
+  if (reads == 1) {
+    self->data.value = input->data.value;
+  }
+  else if (reads == 2) {
+    self->data.value = self->data.value && input->data.value;
+    if (self->data.value) {
       node_broadcast(self, input, e);
-      self->data.counter = 0;
-      self->ready = false;
     }
+    self->ready = false; // operation complete
+  }
+  else {
+    assert(0);
   }
 }
 
-void event_print(Node* self, Node* input, Engine* e) {
+void node_event_print(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
   node_increment_reads(self);
   self->data = input->data;
-  printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.counter);
+  printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.value);
 }
 
-void event_incr(Node* self, Node* input, Engine* e) {
+void node_event_incr(Node* self, Node* input, Engine* e) {
   if (!input) {
     return;
   }
-  self->data.counter += input->data.counter;
+  node_increment_reads(self);
+  self->data.value += input->data.value;
   node_broadcast(self, input, e);
 }
 
@@ -210,7 +219,7 @@ u32 node_broadcast(Node* self, Node* input, Engine* e) {
       continue;
     }
     node_increment_writes(self);
-    event_callback(n, self, e);
+    node_event_callback(n, self, e);
   }
   return count;
 }
@@ -218,7 +227,6 @@ u32 node_broadcast(Node* self, Node* input, Engine* e) {
 u16 node_increment_writes(Node* node) {
   u16 writes = ++node->writes;
   if (writes >= MAX_WRITES) {
-    node->writes = 0;
     node->ready = false;
     return 0;
   }
@@ -229,7 +237,6 @@ u16 node_increment_writes(Node* node) {
 u16 node_increment_reads(Node* node) {
   u16 reads = ++node->reads;
   if (reads >= MAX_READS) {
-    node->reads = 0;
     node->ready = false;
     return 0;
   }
@@ -286,6 +293,10 @@ void nodes_update_and_render(Engine* e) {
   for (u32 i = 0; i < MAX_NODE; ++i) {
     Node* node = &e->state.nodes[i];
     node->ready = true;
+    if (beat) {
+      node->reads = 0;
+      node->writes = 0;
+    }
   }
 
   // process nodes
@@ -328,14 +339,14 @@ void nodes_update_and_render(Engine* e) {
       continue;
     }
     if (beat && node->type == NODE_CLOCK) {
-      event_callback(node, NULL, e);
+      node_event_callback(node, NULL, e);
     }
   }
 
   if (hover) {
     if (mouse_pressed[MOUSE_BUTTON_LEFT]) {
-      hover->data.counter = 1;
-      event_callback(hover, NULL, e);
+      hover->data.value = 1;
+      node_event_callback(hover, NULL, e);
     }
     if (key_pressed[KEY_R]) {
       node_reset(hover);
@@ -386,7 +397,7 @@ void node_render_info_box(Engine* e, Node* node) {
   if (node) {
     render_text_format(x + PADDING, y + PADDING + 0*20, 2, color_white, "type: %s", node_type_str[node->type], node->id);
     render_text_format(x + PADDING, y + PADDING + 1*20, 2, color_white, "id: %u", node->id);
-    render_text_format(x + PADDING, y + PADDING + 2*20, 2, color_white, "counter: %u", node->data.counter);
+    render_text_format(x + PADDING, y + PADDING + 2*20, 2, color_white, "value: %u", node->data.value);
     render_text_format(x + PADDING, y + PADDING + 3*20, 2, color_white, "reads: %u", node->reads);
     render_text_format(x + PADDING, y + PADDING + 4*20, 2, color_white, "writes: %u", node->writes);
     render_sprite_from_id(x + PADDING, y + PADDING + 5*20, 84, 84, (Sprite_id)node->type);

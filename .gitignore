@@ -2,5 +2,5 @@
 *.swp
 *.bin
 .DS_Store
-signals
 png2c
+signal_engine

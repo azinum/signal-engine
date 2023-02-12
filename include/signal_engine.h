@@ -1,7 +1,7 @@
-// signals.h
+// signal_engine.h
 
-#ifndef _SIGNALS_H
-#define _SIGNALS_H
+#ifndef _SIGNAL_ENGINE_H
+#define _SIGNAL_ENGINE_H
 
 #include "common.h"
 #include "assets.h"
@@ -42,4 +42,4 @@ void signal_engine_state_store(const char* path, State* state);
 
 void signal_engine_state_load(const char* path, State* state);
 
-#endif // _SIGNALS_H
+#endif // _SIGNAL_ENGINE_H

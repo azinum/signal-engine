@@ -1,6 +1,6 @@
-// signals.c
+// signal_engine.c
 
-#include "signals.h"
+#include "signal_engine.h"
 
 #include "external/arg_parser.h"
 #include "common.c"
