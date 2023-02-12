@@ -137,7 +137,7 @@ defer:
   return result;
 }
 
-Result platform_window_create(char* title, u32 width, u32 height) {
+Result platform_window_create(char* title, u32 width, u32 height, u32 vsync) {
   Result result = Ok;
   window.width = width;
   window.height = height;
@@ -159,10 +159,14 @@ Result platform_window_create(char* title, u32 width, u32 height) {
     return_defer(Err);
   }
 
+  i32 renderer_flags = SDL_RENDERER_ACCELERATED;
+  if (vsync) {
+    renderer_flags = SDL_RENDERER_PRESENTVSYNC;
+  }
   sdl_renderer = SDL_CreateRenderer(
     sdl_window,
     -1,
-    SDL_RENDERER_ACCELERATED
+    renderer_flags
   );
   if (!sdl_renderer) {
     log_error("failed to create SDL renderer: %s\n", SDL_GetError());

@@ -69,7 +69,7 @@ extern u8 mouse_pressed[];
 extern i32 mouse_scroll_x;
 extern i32 mouse_scroll_y;
 
-Result platform_window_create(char* title, u32 width, u32 height);
+Result platform_window_create(char* title, u32 width, u32 height, u32 vsync);
 
 u32 platform_get_ticks();
 

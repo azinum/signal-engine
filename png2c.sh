@@ -6,7 +6,7 @@ echo "// assets.h" > ${FILE}
 echo "#ifndef _ASSETS_H" >> ${FILE}
 echo "#define _ASSETS_H" >> ${FILE}
 
-for PNG_PATH in assets/grayscale/*.png; do
+for PNG_PATH in assets/icons/*.png; do
 	NAME=${PNG_PATH%.png}
 	NAME=${NAME##*/}
 	./png2c ${PNG_PATH} ${NAME} >> ${FILE}

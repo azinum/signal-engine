@@ -1,6 +1,6 @@
 // node.c
 
-#define BORDER_THICKNESS 3
+#define BORDER_THICKNESS 2
 
 #define MAX_NEIGHBOUR 4
 #define MAX_READS 4
@@ -379,9 +379,9 @@ void node_clear(Node* node) {
 }
 
 void node_grid_init(State* state) {
-  const u32 PADDING = DEFAULT_PADDING;
-  const u32 NODE_WIDTH = 32;
-  const u32 NODE_HEIGHT = 32;
+  const u32 PADDING = 2;
+  const u32 NODE_WIDTH = 38;
+  const u32 NODE_HEIGHT = 38;
   for (u32 y = 0; y < NODE_GRID_HEIGHT; ++y) {
     for (u32 x = 0; x < NODE_GRID_WIDTH; ++x) {
       Node* node = &state->nodes[y * NODE_GRID_WIDTH + x];
@@ -483,7 +483,7 @@ void nodes_update_and_render(Engine* e) {
   for (u32 i = 0; i < MAX_NODE; ++i) {
     Node* node = &e->state.nodes[i];
     if (!node->alive) {
-      render_fill_rect(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
+      render_rect(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, BORDER_THICKNESS, node->color);
       continue;
     }
     node->color = color_lerp(node->color, node->target_color, e->state.dt * 10.0f);
@@ -506,25 +506,25 @@ void node_render_info_box(Engine* e, Node* node) {
   u32 width = 0;
   u32 height = 0;
   platform_window_size(&width, &height);
-  u32 x = 618;
-  u32 y = 2;
   const u32 PADDING = DEFAULT_PADDING;
-  const u32 box_w = width - 620;
-  const u32 box_h = height - (2 * PADDING);
-  render_fill_rect(618, 2, box_w, box_h, color_rgb(0x15, 0x16, 0x20));
+  const u32 box_w = 200;
+  const u32 box_h = height;
+  u32 x = width - box_w;
+  u32 y = 2;
+  render_fill_rect(x, 0, box_w, box_h, color_rgb(0x20, 0x22, 0x32));
   if (node) {
     render_text_format(x + PADDING, y + PADDING + 0*20, 2, colors[COLOR_WHITE], "type: %s", node_type_str[node->type], node->id);
     render_text_format(x + PADDING, y + PADDING + 1*20, 2, colors[COLOR_WHITE], "id: %u", node->id);
     render_text_format(x + PADDING, y + PADDING + 2*20, 2, colors[COLOR_WHITE], "value: %u", node->data.value);
     render_text_format(x + PADDING, y + PADDING + 3*20, 2, colors[COLOR_WHITE], "reads: %u", node->reads);
     render_text_format(x + PADDING, y + PADDING + 4*20, 2, colors[COLOR_WHITE], "writes: %u", node->writes);
-    render_sprite_from_id(x + PADDING, y + PADDING + 5*20, 84, 84, (Sprite_id)node->type);
-    render_rect(x + PADDING, y + PADDING + 5*20, 84, 84, BORDER_THICKNESS, colors[COLOR_WHITE]);
+    render_sprite_from_id(x + PADDING, y + PADDING + 5*20, 96, 96, (Sprite_id)node->type);
+    render_rect(x + PADDING, y + PADDING + 5*20, 96, 96, BORDER_THICKNESS, colors[COLOR_WHITE]);
   }
   if (copy) {
     render_text_format(x + PADDING, y + PADDING + 11*20, 2, colors[COLOR_WHITE], "clipboard");
-    render_sprite_from_id(x + PADDING, y + PADDING + 12*20, 84, 84, (Sprite_id)copy->type);
-    render_rect(x + PADDING, y + PADDING + 12*20, 84, 84, BORDER_THICKNESS, colors[COLOR_WHITE]);
+    render_sprite_from_id(x + PADDING, y + PADDING + 12*20, 96, 96, (Sprite_id)copy->type);
+    render_rect(x + PADDING, y + PADDING + 12*20, 96, 96, BORDER_THICKNESS, colors[COLOR_WHITE]);
   }
   if (e->state.paused) {
     render_text_format(x + PADDING, height - 1*20, 2, colors[COLOR_WHITE], "paused");

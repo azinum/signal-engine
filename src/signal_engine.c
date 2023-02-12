@@ -49,7 +49,7 @@ i32 signal_engine_start(i32 argc, char** argv) {
   const f32 DT_MAX = 0.5f;
   char title[MAX_TITLE_LENGTH] = {0};
 
-  if (platform_window_create("", 800, 600) == Ok) {
+  if (platform_window_create("", 800, 600, false) == Ok) {
     u32 prev = platform_get_ticks();
     u32 current = prev;
 
@@ -116,7 +116,7 @@ i32 signal_engine_start(i32 argc, char** argv) {
 
       camera_update(&engine, &state->camera);
 
-      renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
+      renderer_begin_frame(color_rgb(0x24, 0x29, 0x39));
 
       if (!(state->tick % 16)) {
         snprintf(title, MAX_TITLE_LENGTH, "%s | %.4g bpm | %d fps | %.3g delta", PROG_NAME, state->bpm, (u32)(1.0f / state->dt), state->dt);

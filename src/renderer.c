@@ -85,7 +85,7 @@ void render_sprite(i32 x, i32 y, i32 w, i32 h, u32* pixels, u32 width, u32 heigh
     height,
     width
   );
-  olivec_sprite_copy(renderer.oc, x, y, w, h, sprite);
+  olivec_sprite_blend(renderer.oc, x, y, w, h, sprite);
 }
 
 void render_sprite_from_id(i32 x, i32 y, i32 w, i32 h, Sprite_id id) {
