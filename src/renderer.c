@@ -28,6 +28,7 @@ static const Sprite sprites[MAX_SPRITE] = {
   [SPRITE_NODE_AND]   = { .pixels = node_and_pixels, .width = node_and_width, .height = node_and_height, },
   [SPRITE_NODE_PRINT] = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },
   [SPRITE_NODE_INCR]  = { .pixels = node_incr_pixels, .width = node_incr_width, .height = node_incr_height, },
+  [SPRITE_NODE_NOT]   = { .pixels = node_not_pixels, .width = node_not_width, .height = node_not_height, },
 };
 
 const u32 color_white = OLIVEC_RGBA(0xff, 0xff, 0xff, 0xff);
@@ -117,9 +118,9 @@ inline u32 color_rgb(u8 r, u8 g, u8 b) {
 
 inline u32 color_lerp(u32 from, u32 to, f32 factor) {
   return color_rgb(
-    (u8)lerp_f32(OLIVEC_RED(from), OLIVEC_RED(to), factor),
-    (u8)lerp_f32(OLIVEC_GREEN(from), OLIVEC_GREEN(to), factor),
-    (u8)lerp_f32(OLIVEC_BLUE(from), OLIVEC_BLUE(to), factor)
+    (u8)lerp(OLIVEC_RED(from),   OLIVEC_RED(to),   factor),
+    (u8)lerp(OLIVEC_GREEN(from), OLIVEC_GREEN(to), factor),
+    (u8)lerp(OLIVEC_BLUE(from),  OLIVEC_BLUE(to),  factor)
   );
 }
 

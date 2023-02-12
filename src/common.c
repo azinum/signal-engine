@@ -102,10 +102,6 @@ void log_info(const char* format, ...) {
   va_end(argp);
 }
 
-inline f32 lerp_f32(f32 v0, f32 v1, f32 t) {
-  return (1.0f - t) * v0 + t * v1;
-}
-
 u32 inside_box(const Box* box, i32 x, i32 y) {
   return
     (x >= box->x && x <= box->x + box->w) &&

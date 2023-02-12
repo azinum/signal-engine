@@ -28,6 +28,7 @@ static void node_event_io(Node* self, Node* input, Engine* e);
 static void node_event_and(Node* self, Node* input, Engine* e);
 static void node_event_print(Node* self, Node* input, Engine* e);
 static void node_event_incr(Node* self, Node* input, Engine* e);
+static void node_event_not(Node* self, Node* input, Engine* e);
 
 static Node_event node_events[MAX_NODE_TYPE] = {
   [NODE_NONE]  = { .event = node_event_none,  .reads = 0, },
@@ -37,6 +38,7 @@ static Node_event node_events[MAX_NODE_TYPE] = {
   [NODE_AND]   = { .event = node_event_and,   .reads = 2, },
   [NODE_PRINT] = { .event = node_event_print, .reads = 1, },
   [NODE_INCR]  = { .event = node_event_incr,  .reads = 1, },
+  [NODE_NOT]   = { .event = node_event_not,   .reads = 1, },
 };
 
 void node_event_callback(Node* node, Node* input, Engine* e) {
@@ -134,6 +136,15 @@ void node_event_incr(Node* self, Node* input, Engine* e) {
   }
   node_increment_reads(self);
   self->data.value += input->data.value;
+  node_broadcast(self, input, e);
+}
+
+void node_event_not(Node* self, Node* input, Engine* e) {
+  if (!input) {
+    return;
+  }
+  node_increment_reads(self);
+  self->data.value = !input->data.value;
   node_broadcast(self, input, e);
 }
 
@@ -286,8 +297,7 @@ void nodes_update_and_render(Engine* e) {
     e->state.timer = e->state.timer - (1.0f / bps);
   }
   Node* hover = NULL;
-  i32 camera_x = e->state.camera_x;
-  i32 camera_y = e->state.camera_y;
+  Camera* camera = &e->state.camera;
 
   // make nodes ready
   for (u32 i = 0; i < MAX_NODE; ++i) {
@@ -302,7 +312,7 @@ void nodes_update_and_render(Engine* e) {
   // process nodes
   for (u32 i = 0; i < MAX_NODE; ++i) {
     Node* node = &e->state.nodes[i];
-    if (inside_box(&node->box, mouse_x + camera_x, mouse_y + camera_y)) {
+    if (inside_box(&node->box, mouse_x + camera->x, mouse_y + camera->y)) {
       if (mouse_pressed[MOUSE_BUTTON_RIGHT]) {
         node_clear(node);
         node->alive = false;
@@ -369,7 +379,7 @@ void nodes_update_and_render(Engine* e) {
   for (u32 i = 0; i < MAX_NODE; ++i) {
     Node* node = &e->state.nodes[i];
     if (!node->alive) {
-      render_fill_rect(node->box.x - camera_x, node->box.y - camera_y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
+      render_fill_rect(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, color_rgb(0x00, 0x00, 0x00));
       continue;
     }
     node->color = color_lerp(node->color, node->target_color, e->state.dt * 10.0f);
@@ -377,14 +387,18 @@ void nodes_update_and_render(Engine* e) {
     if (node == hover) {
       node->color = color_lerp(node->target_color, color_white, 1.0f);
     }
-    render_sprite_from_id(node->box.x - camera_x, node->box.y - camera_y, node->box.w, node->box.h, (Sprite_id)node->type);
-    render_rect(node->box.x - camera_x, node->box.y - camera_y, node->box.w, node->box.h, BORDER_THICKNESS, node->color);
+    render_sprite_from_id(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, (Sprite_id)node->type);
+    render_rect(node->box.x - camera->x, node->box.y - camera->y, node->box.w, node->box.h, BORDER_THICKNESS, node->color);
   }
 
   node_render_info_box(e, hover);
 }
 
 void node_render_info_box(Engine* e, Node* node) {
+  if (!e->show_info_box) {
+    return;
+  }
+
   u32 width = 0;
   u32 height = 0;
   platform_window_size(&width, &height);

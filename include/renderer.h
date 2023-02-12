@@ -33,6 +33,7 @@ typedef enum {
   SPRITE_NODE_AND,
   SPRITE_NODE_PRINT,
   SPRITE_NODE_INCR,
+  SPRITE_NODE_NOT,
 
   MAX_SPRITE,
 } Sprite_id;

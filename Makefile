@@ -4,7 +4,7 @@ CC=clang
 
 CFLAGS_COMMON=-Wall -O3
 
-CFLAGS=-ffast-math -Iinclude
+CFLAGS=-ffast-math -Iinclude -lm
 
 PKG_LIBS=`pkg-config --libs sdl2`
 

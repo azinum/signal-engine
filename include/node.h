@@ -11,6 +11,7 @@ typedef enum {
   NODE_AND,
   NODE_PRINT,
   NODE_INCR,
+  NODE_NOT,
 
   MAX_NODE_TYPE,
 } Node_type;
@@ -23,6 +24,7 @@ const char* node_type_str[MAX_NODE_TYPE] = {
   [NODE_AND]   = "and",
   [NODE_PRINT] = "print",
   [NODE_INCR]  = "incr",
+  [NODE_NOT]   = "not",
 };
 
 typedef union {

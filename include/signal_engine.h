@@ -4,10 +4,12 @@
 #define _SIGNAL_ENGINE_H
 
 #include "common.h"
+#include "math_util.h"
 #include "assets.h"
 #include "platform.h"
 #include "renderer.h"
 #include "node.h"
+#include "camera.h"
 
 #define NODE_GRID_WIDTH 64
 #define NODE_GRID_HEIGHT 64
@@ -23,8 +25,7 @@ typedef struct State {
   f32 bpm;
   u32 tick;
   u32 paused;
-  i32 camera_x;
-  i32 camera_y;
+  Camera camera;
   Node nodes[MAX_NODE];
 } __attribute__((packed, aligned(sizeof(u32)))) State;
 
@@ -34,6 +35,7 @@ typedef struct Engine {
   // internal state
   Buffer buffer_map;
   i32 buffer_fd;
+  u32 show_info_box;
 } Engine;
 
 i32 signal_engine_start(i32 argc, char** argv);

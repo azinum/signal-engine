@@ -4,9 +4,11 @@
 
 #include "external/arg_parser.h"
 #include "common.c"
+#include "math_util.c"
 #include "platform.c"
 #include "renderer.c"
 #include "node.c"
+#include "camera.c"
 
 #define MAX_TITLE_LENGTH 64
 #define PROG_NAME "Signals"
@@ -20,13 +22,13 @@ void signal_state_init(State* state) {
   state->timer = 0.0f;
   state->bpm = BPM;
   state->paused = false;
-  state->camera_x = 0;
-  state->camera_y = 0;
+  camera_init(&state->camera);
   node_grid_init(state);
 }
 
 void signal_engine_init(Engine* e) {
   signal_state_init(&e->state);
+  e->show_info_box = true;
 }
 
 i32 signal_engine_start(i32 argc, char** argv) {
@@ -78,21 +80,26 @@ i32 signal_engine_start(i32 argc, char** argv) {
       if (key_pressed[KEY_SPACE]) {
         state->paused = !state->paused;
       }
+      if (key_pressed[KEY_M]) {
+        engine.show_info_box = !engine.show_info_box;
+      }
 
       if (!key_mod_ctrl) {
         if (key_down[KEY_W]) {
-          state->camera_y -= 1;
+          state->camera.y_pos -= CAMERA_SPEED * state->dt;
         }
         if (key_down[KEY_S]) {
-          state->camera_y += 1;
+          state->camera.y_pos += CAMERA_SPEED * state->dt;
         }
         if (key_down[KEY_A]) {
-          state->camera_x -= 1;
+          state->camera.x_pos -= CAMERA_SPEED * state->dt;
         }
         if (key_down[KEY_D]) {
-          state->camera_x += 1;
+          state->camera.x_pos += CAMERA_SPEED * state->dt;
         }
       }
+
+      camera_update(&engine, &state->camera);
 
       renderer_begin_frame(color_rgb(0x20, 0x25, 0x34));
 
