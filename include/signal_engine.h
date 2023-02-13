@@ -16,6 +16,7 @@
 #define MAX_NODE (NODE_GRID_WIDTH * NODE_GRID_HEIGHT)
 
 #define DEFAULT_PADDING 2
+#define DEFAULT_GLYPH_SIZE 2
 
 #define STATE_PATH "state.bin"
 
