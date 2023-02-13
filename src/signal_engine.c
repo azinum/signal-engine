@@ -19,6 +19,10 @@ i32 saved_mouse_y = 0;
 i32 saved_camera_x = 0;
 i32 saved_camera_y = 0;
 
+char log_entries[MAX_LOG_ENTRY][LOG_ENTRY_LENGTH] = {0};
+u32 log_entry_count = 0;
+u32 log_head = 0;
+
 static void signal_state_init(State* state);
 static void signal_engine_init(Engine* state);
 
@@ -29,11 +33,13 @@ void signal_state_init(State* state) {
   state->paused = false;
   camera_init(&state->camera);
   node_grid_init(state);
+  log_entry_count = 0;
 }
 
 void signal_engine_init(Engine* e) {
   signal_state_init(&e->state);
   e->show_info_box = true;
+  e->show_log_box = false;
 }
 
 i32 signal_engine_start(i32 argc, char** argv) {
@@ -44,7 +50,7 @@ i32 signal_engine_start(i32 argc, char** argv) {
   State* state = &engine.state;
 
   signal_state_init(state);
-  signal_engine_state_load(STATE_PATH, state);
+  signal_engine_state_load(STATE_PATH, &engine);
 
   const f32 DT_MAX = 0.5f;
   char title[MAX_TITLE_LENGTH] = {0};
@@ -69,10 +75,10 @@ i32 signal_engine_start(i32 argc, char** argv) {
           signal_state_init(state);
         }
         if (key_pressed[KEY_S]) {
-          signal_engine_state_store(STATE_PATH, state);
+          signal_engine_state_store(STATE_PATH, &engine);
         }
         if (key_pressed[KEY_R]) {
-          signal_engine_state_load(STATE_PATH, state);
+          signal_engine_state_load(STATE_PATH, &engine);
         }
       }
       else {
@@ -100,6 +106,9 @@ i32 signal_engine_start(i32 argc, char** argv) {
         }
         if (key_down[KEY_D]) {
           state->camera.target_x += CAMERA_SPEED * state->dt;
+        }
+        if (key_pressed[KEY_L]) {
+          engine.show_log_box = !engine.show_log_box;
         }
       }
 
@@ -131,24 +140,49 @@ i32 signal_engine_start(i32 argc, char** argv) {
   return result;
 }
 
-void signal_engine_state_store(const char* path, State* state) {
+void signal_engine_log(Engine* e, const char* tag, const char* format, ...) {
+  u32 index = log_entry_count;
+  if (log_entry_count >= MAX_LOG_ENTRY) {
+    index = log_head;
+    ++log_head;
+    if (log_head >= MAX_LOG_ENTRY) {
+      log_head = 0;
+    }
+  }
+  else {
+    ++log_entry_count;
+  }
+
+  char* entry = log_entries[index];
+  u32 count = 0;
+  if (tag) {
+    count = snprintf(entry, LOG_ENTRY_LENGTH, "%s: ", tag);
+  }
+
+  va_list argp;
+  va_start(argp, format);
+  vsnprintf(entry + count, LOG_ENTRY_LENGTH - count, format, argp);
+  va_end(argp);
+}
+
+void signal_engine_state_store(const char* path, Engine* e) {
   Buffer buffer;
-  buffer.data = (u8*)state;
+  buffer.data = (u8*)&e->state;
   buffer.size = sizeof(State);
   if (file_write(path, &buffer) == Ok) {
-    log_info("stored state file `%s`\n", path);
+    signal_engine_log(e, "info", "stored state file %s", path);
   }
 }
 
-void signal_engine_state_load(const char* path, State* state) {
+void signal_engine_state_load(const char* path, Engine* e) {
   Buffer buffer;
   if (file_read(path, &buffer) == Ok) {
     if (sizeof(State) != buffer.size) {
       log_error("signals_state_load: tried loading a corrupt/incorrect version of state file `%s`\n", path);
       return;
     }
-    memcpy(state, buffer.data, buffer.size);
+    memcpy(&e->state, buffer.data, buffer.size);
     buffer_free(&buffer);
-    log_info("loaded state file `%s`\n", path);
+    signal_engine_log(e, "info", "loaded state file %s", path);
   }
 }

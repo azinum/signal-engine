@@ -20,6 +20,13 @@
 
 #define STATE_PATH "state.bin"
 
+#define LOG_ENTRY_LENGTH 64
+#define MAX_LOG_ENTRY 16
+
+extern char log_entries[MAX_LOG_ENTRY][LOG_ENTRY_LENGTH];
+extern u32 log_entry_count;
+extern u32 log_head;
+
 typedef struct State {
   f32 dt;
   f32 timer;
@@ -37,12 +44,15 @@ typedef struct Engine {
   Buffer buffer_map;
   i32 buffer_fd;
   u32 show_info_box;
+  u32 show_log_box;
 } Engine;
 
 i32 signal_engine_start(i32 argc, char** argv);
 
-void signal_engine_state_store(const char* path, State* state);
+void signal_engine_log(Engine* e, const char* tag, const char* format, ...);
 
-void signal_engine_state_load(const char* path, State* state);
+void signal_engine_state_store(const char* path, Engine* e);
+
+void signal_engine_state_load(const char* path, Engine* e);
 
 #endif // _SIGNAL_ENGINE_H

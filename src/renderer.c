@@ -43,8 +43,9 @@ u32 colors[MAX_COLOR] = {
   [COLOR_PURPLE]     = COLOR_RGB(0xea, 0x95, 0xea),
   [COLOR_CYAN]       = COLOR_RGB(0x55, 0xea, 0xea),
   [COLOR_YELLOW]     = COLOR_RGB(0xdc, 0xb7, 0x23),
-  [COLOR_DARK_GREEN] = COLOR_RGB(0x23, 0xaa, 0x23),
   [COLOR_TURQUOSE]   = COLOR_RGB(0x36, 0x77, 0x63),
+  [COLOR_DARK_GREEN] = COLOR_RGB(0x23, 0xaa, 0x23),
+  [COLOR_DARK_GRAY]  = COLOR_RGB(0x30, 0x30, 0x30),
 };
 
 Result renderer_init(u32 width, u32 height) {

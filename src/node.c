@@ -36,35 +36,6 @@ static void node_event_equals(Node* self, Node* input, Engine* e);
 
 static void node_broadcast_event_copy(Node* self, Node* input, Engine* e);
 
-/*
-
-prepare_node_event(self)
-  return self.ready && self.reads <= event.reads && self.writes <= MAX_WRITES
-
-finalize_node_event(self)
-  if self.reads >= event.reads || self.writes >= MAX_WRITES
-    self.ready = false
-
-node_event_*()
-  if !prepare_node_event() // safe guard
-    return
-
-  /// do work
-
-  finalize_node_event()
-
-node_event()
-  if reads == node_event.reads
-     self.ready = false // operation complete
-
-nodes_update()
-  for node in nodes
-     if beat && node.ready == false
-       node.reads = 0
-       node.writes = 0
-       node.ready = true
-*/
-
 static Node_event node_events[MAX_NODE_TYPE] = {
   [NODE_NONE]   = { .event = node_event_none,   .broadcast = NULL, .reads = 0, },
   [NODE_CLOCK]  = { .event = node_event_clock,  .broadcast = NULL, .reads = 0, },
@@ -168,7 +139,8 @@ void node_event_print(Node* self, Node* input, Engine* e) {
   if (input) {
     node_increment_reads(self);
     self->data = input->data;
-    printf("%04d:%s: %u\n", self->id, node_type_str[self->type], self->data.value);
+    signal_engine_log(e, "node", "%s: %u", node_type_str[input->type], self->data.value);
+    log_info("%s: %u\n", node_type_str[input->type], self->data.value);
   }
   node_finalize(self);
 }
@@ -439,7 +411,7 @@ void nodes_update_and_render(Engine* e) {
       if (key_pressed[KEY_V] && key_mod_ctrl) {
         if (copy) {
           node_copy(node, copy);
-          log_info("pasted node `%d`\n", copy->id);
+          signal_engine_log(e, "info", "pasted node %u", copy->id);
         }
       }
       hover = node;
@@ -469,14 +441,14 @@ void nodes_update_and_render(Engine* e) {
       if (key_pressed[KEY_C]) {
         copy = &copy_data;
         memcpy(copy, hover, sizeof(Node));
-        log_info("copied node `%d`\n", hover->id);
+        signal_engine_log(e, "info", "copied node %u", hover->id);
       }
       if (key_pressed[KEY_X]) {
         copy = &copy_data;
         memcpy(copy, hover, sizeof(Node));
         node_clear(hover);
         hover->alive = false;
-        log_info("cut node `%d`\n", hover->id);
+        signal_engine_log(e, "info", "cut node %u", hover->id);
       }
     }
   }
@@ -513,6 +485,7 @@ void node_render_info_box(Engine* e, Node* node) {
 
   // hacks! would be great with a proper ui
 #define Y_PLACE(OFFSET) (y = (placement_count * glyph_spacing) + OFFSET, ++placement_count, y)
+#define Y_PLACE_GET(OFFSET) (y = (placement_count * glyph_spacing) + OFFSET)
 
   if (e->show_info_box) {
     if (node) {
@@ -539,7 +512,7 @@ void node_render_info_box(Engine* e, Node* node) {
     if (copy) {
       if (copy->type != NODE_NONE) {
         u32 y_pos = Y_PLACE(0);
-        render_fill_rect(0, y_pos, width, glyph_spacing, colors[COLOR_GRAY]);
+        render_fill_rect(0, y_pos, width, glyph_spacing, colors[COLOR_DARK_GRAY]);
         render_text_format(
           padding,
           y_pos + padding,
@@ -549,38 +522,27 @@ void node_render_info_box(Engine* e, Node* node) {
           ,
           node_type_str[copy->type]
         );
+        render_sprite_from_id(0, Y_PLACE_GET(0), 64, 64, (Sprite_id)copy->type);
       }
+    }
+  }
+  if (e->show_log_box) {
+    u32 log_height = glyph_spacing * MAX_LOG_ENTRY;
+    u32 log_width = width >> 1;
+    u32 y_pos = Y_PLACE(0);
+    render_fill_rect(width - log_width, y_pos, log_width, log_height, colors[COLOR_DARK_GRAY]);
+    u32 index = log_head;
+    for (u32 i = 0; i < log_entry_count; ++i, ++index) {
+      if (index >= log_entry_count) {
+        index = 0;
+      }
+      char* entry = log_entries[index];
+      render_text_format(width - log_width, y_pos, 1, colors[COLOR_WHITE], "%s", entry);
+      y_pos = Y_PLACE(0);
     }
   }
 
   if (e->state.paused) {
-    render_text_format(padding, Y_PLACE(0), glyph_size, colors[COLOR_WHITE], "paused");
+    render_text_format(padding, height - glyph_spacing, glyph_size, colors[COLOR_WHITE], "paused");
   }
-#if 0
-  u32 width = 0;
-  u32 height = 0;
-  platform_window_size(&width, &height);
-  const u32 PADDING = DEFAULT_PADDING;
-  const u32 box_w = 200;
-  const u32 box_h = height;
-  u32 x = width - box_w;
-  u32 y = 2;
-  render_fill_rect(x, 0, box_w, box_h, color_rgb(0x20, 0x22, 0x32));
-  if (node) {
-    render_text_format(x + PADDING, y + PADDING + 0*20, 2, colors[COLOR_WHITE], "type: %s", node_type_str[node->type], node->id);
-    render_text_format(x + PADDING, y + PADDING + 1*20, 2, colors[COLOR_WHITE], "value: %u", node->data.value);
-    render_text_format(x + PADDING, y + PADDING + 2*20, 2, colors[COLOR_WHITE], "reads: %u", node->reads);
-    render_text_format(x + PADDING, y + PADDING + 3*20, 2, colors[COLOR_WHITE], "writes: %u", node->writes);
-    render_sprite_from_id(x + PADDING, y + PADDING + 4*20, 96, 96, (Sprite_id)node->type);
-    render_rect(x + PADDING, y + PADDING + 4*20, 96, 96, BORDER_THICKNESS, colors[COLOR_WHITE]);
-  }
-  if (copy) {
-    render_text_format(x + PADDING, y + PADDING + 11*20, 2, colors[COLOR_WHITE], "clipboard");
-    render_sprite_from_id(x + PADDING, y + PADDING + 12*20, 96, 96, (Sprite_id)copy->type);
-    render_rect(x + PADDING, y + PADDING + 12*20, 96, 96, BORDER_THICKNESS, colors[COLOR_WHITE]);
-  }
-  if (e->state.paused) {
-    render_text_format(x + PADDING, height - 1*20, 2, colors[COLOR_WHITE], "paused");
-  }
-#endif
 }
