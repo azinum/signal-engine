@@ -223,6 +223,7 @@ void node_event_copy_lr(Node* self, Node* input, Engine* e) {
       self->data.value = input->data.value;
       if (out) {
         node_increment_writes(self);
+        out->data.value = self->data.value;
         node_event_callback(out, self, e);
       }
     }
@@ -242,6 +243,7 @@ void node_event_copy_rl(Node* self, Node* input, Engine* e) {
       self->data.value = input->data.value;
       if (out) {
         node_increment_writes(self);
+        out->data.value = self->data.value;
         node_event_callback(out, self, e);
       }
     }
@@ -261,6 +263,7 @@ void node_event_copy_ud(Node* self, Node* input, Engine* e) {
       self->data.value = input->data.value;
       if (out) {
         node_increment_writes(self);
+        out->data.value = self->data.value;
         node_event_callback(out, self, e);
       }
     }
@@ -280,6 +283,7 @@ void node_event_copy_du(Node* self, Node* input, Engine* e) {
       self->data.value = input->data.value;
       if (out) {
         node_increment_writes(self);
+        out->data.value = self->data.value;
         node_event_callback(out, self, e);
       }
     }
