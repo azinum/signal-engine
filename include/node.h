@@ -14,21 +14,29 @@ typedef enum {
   NODE_NOT,
   NODE_COPY,
   NODE_EQUALS,
+  NODE_COPY_LR,
+  NODE_COPY_RL,
+  NODE_COPY_UD,
+  NODE_COPY_DU,
 
   MAX_NODE_TYPE,
 } Node_type;
 
 const char* node_type_str[MAX_NODE_TYPE] = {
-  [NODE_NONE]   = "none",
-  [NODE_CLOCK]  = "clock",
-  [NODE_ADD]    = "add",
-  [NODE_IO]     = "io",
-  [NODE_AND]    = "and",
-  [NODE_PRINT]  = "print",
-  [NODE_INCR]   = "incr",
-  [NODE_NOT]    = "not",
-  [NODE_COPY]   = "copy",
-  [NODE_EQUALS] = "equals",
+  [NODE_NONE]    = "none",
+  [NODE_CLOCK]   = "clock",
+  [NODE_ADD]     = "add",
+  [NODE_IO]      = "io",
+  [NODE_AND]     = "and",
+  [NODE_PRINT]   = "print",
+  [NODE_INCR]    = "incr",
+  [NODE_NOT]     = "not",
+  [NODE_COPY]    = "copy",
+  [NODE_EQUALS]  = "equals",
+  [NODE_COPY_LR] = "copy lr",
+  [NODE_COPY_RL] = "copy rl",
+  [NODE_COPY_UD] = "copy ud",
+  [NODE_COPY_DU] = "copy du",
 };
 
 typedef union {

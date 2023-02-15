@@ -21,16 +21,20 @@ typedef struct Sprite {
 } Sprite;
 
 static const Sprite sprites[MAX_SPRITE] = {
-  [SPRITE_NODE_NONE]   = { .pixels = node_none_pixels, .width = node_none_width, .height = node_none_height, },
-  [SPRITE_NODE_CLOCK]  = { .pixels = node_clock_pixels, .width = node_clock_width, .height = node_clock_height, },
-  [SPRITE_NODE_ADD]    = { .pixels = node_add_pixels, .width = node_add_width, .height = node_add_height, },
-  [SPRITE_NODE_IO]     = { .pixels = node_io_pixels, .width = node_io_width, .height = node_io_height, },
-  [SPRITE_NODE_AND]    = { .pixels = node_and_pixels, .width = node_and_width, .height = node_and_height, },
-  [SPRITE_NODE_PRINT]  = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },
-  [SPRITE_NODE_INCR]   = { .pixels = node_incr_pixels, .width = node_incr_width, .height = node_incr_height, },
-  [SPRITE_NODE_NOT]    = { .pixels = node_not_pixels, .width = node_not_width, .height = node_not_height, },
-  [SPRITE_NODE_COPY]   = { .pixels = node_copy_pixels, .width = node_copy_width, .height = node_copy_height, },
-  [SPRITE_NODE_EQUALS] = { .pixels = node_equals_pixels, .width = node_equals_width, .height = node_equals_height, },
+  [SPRITE_NODE_NONE]    = { .pixels = node_none_pixels, .width = node_none_width, .height = node_none_height, },
+  [SPRITE_NODE_CLOCK]   = { .pixels = node_clock_pixels, .width = node_clock_width, .height = node_clock_height, },
+  [SPRITE_NODE_ADD]     = { .pixels = node_add_pixels, .width = node_add_width, .height = node_add_height, },
+  [SPRITE_NODE_IO]      = { .pixels = node_io_pixels, .width = node_io_width, .height = node_io_height, },
+  [SPRITE_NODE_AND]     = { .pixels = node_and_pixels, .width = node_and_width, .height = node_and_height, },
+  [SPRITE_NODE_PRINT]   = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },
+  [SPRITE_NODE_INCR]    = { .pixels = node_incr_pixels, .width = node_incr_width, .height = node_incr_height, },
+  [SPRITE_NODE_NOT]     = { .pixels = node_not_pixels, .width = node_not_width, .height = node_not_height, },
+  [SPRITE_NODE_COPY]    = { .pixels = node_copy_pixels, .width = node_copy_width, .height = node_copy_height, },
+  [SPRITE_NODE_EQUALS]  = { .pixels = node_equals_pixels, .width = node_equals_width, .height = node_equals_height, },
+  [SPRITE_NODE_COPY_LR] = { .pixels = node_copy_lr_pixels, .width = node_copy_lr_width, .height = node_copy_lr_height, },
+  [SPRITE_NODE_COPY_RL] = { .pixels = node_copy_rl_pixels, .width = node_copy_rl_width, .height = node_copy_rl_height, },
+  [SPRITE_NODE_COPY_UD] = { .pixels = node_copy_ud_pixels, .width = node_copy_ud_width, .height = node_copy_ud_height, },
+  [SPRITE_NODE_COPY_DU] = { .pixels = node_copy_du_pixels, .width = node_copy_du_width, .height = node_copy_du_height, },
 };
 
 u32 colors[MAX_COLOR] = {

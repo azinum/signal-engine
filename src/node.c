@@ -11,7 +11,9 @@ static Node* copy = NULL;
 
 static Node* node_from_grid_pos(Engine* e, u32 x, u32 y);
 static Result id_to_grid_pos(Node* node, u32* x, u32* y);
+static Result node_to_grid_pos(Node* node, u32* x, u32* y);
 static void node_get_alive_neighbours(Engine* e, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count);
+static Node* node_get_alive_neighbour(Engine* e, Node* node, i32 delta_x, i32 delta_y);
 static void node_copy(Node* dest, Node* src);
 
 // broadcast to neighbours
@@ -33,20 +35,28 @@ static void node_event_incr(Node* self, Node* input, Engine* e);
 static void node_event_not(Node* self, Node* input, Engine* e);
 static void node_event_copy(Node* self, Node* input, Engine* e);
 static void node_event_equals(Node* self, Node* input, Engine* e);
+static void node_event_copy_lr(Node* self, Node* input, Engine* e);
+static void node_event_copy_rl(Node* self, Node* input, Engine* e);
+static void node_event_copy_ud(Node* self, Node* input, Engine* e);
+static void node_event_copy_du(Node* self, Node* input, Engine* e);
 
 static void node_broadcast_event_copy(Node* self, Node* input, Engine* e);
 
 static Node_event node_events[MAX_NODE_TYPE] = {
-  [NODE_NONE]   = { .event = node_event_none,   .broadcast = NULL, .reads = 0, },
-  [NODE_CLOCK]  = { .event = node_event_clock,  .broadcast = NULL, .reads = 0, },
-  [NODE_ADD]    = { .event = node_event_add,    .broadcast = NULL, .reads = 2, },
-  [NODE_IO]     = { .event = node_event_io,     .broadcast = NULL, .reads = 1, },
-  [NODE_AND]    = { .event = node_event_and,    .broadcast = NULL, .reads = 2, },
-  [NODE_PRINT]  = { .event = node_event_print,  .broadcast = NULL, .reads = 1, },
-  [NODE_INCR]   = { .event = node_event_incr,   .broadcast = NULL, .reads = 1, },
-  [NODE_NOT]    = { .event = node_event_not,    .broadcast = NULL, .reads = 1, },
-  [NODE_COPY]   = { .event = node_event_copy,   .broadcast = node_broadcast_event_copy, .reads = 1, },
-  [NODE_EQUALS] = { .event = node_event_equals, .broadcast = NULL, .reads = 2, },
+  [NODE_NONE]    = { .event = node_event_none,    .broadcast = NULL, .reads = 0, },
+  [NODE_CLOCK]   = { .event = node_event_clock,   .broadcast = NULL, .reads = 0, },
+  [NODE_ADD]     = { .event = node_event_add,     .broadcast = NULL, .reads = 2, },
+  [NODE_IO]      = { .event = node_event_io,      .broadcast = NULL, .reads = 1, },
+  [NODE_AND]     = { .event = node_event_and,     .broadcast = NULL, .reads = 2, },
+  [NODE_PRINT]   = { .event = node_event_print,   .broadcast = NULL, .reads = 1, },
+  [NODE_INCR]    = { .event = node_event_incr,    .broadcast = NULL, .reads = 1, },
+  [NODE_NOT]     = { .event = node_event_not,     .broadcast = NULL, .reads = 1, },
+  [NODE_COPY]    = { .event = node_event_copy,    .broadcast = node_broadcast_event_copy, .reads = 1, },
+  [NODE_EQUALS]  = { .event = node_event_equals,  .broadcast = NULL, .reads = 2, },
+  [NODE_COPY_LR] = { .event = node_event_copy_lr, .broadcast = NULL, .reads = 1, },
+  [NODE_COPY_RL] = { .event = node_event_copy_rl, .broadcast = NULL, .reads = 1, },
+  [NODE_COPY_UD] = { .event = node_event_copy_ud, .broadcast = NULL, .reads = 1, },
+  [NODE_COPY_DU] = { .event = node_event_copy_du, .broadcast = NULL, .reads = 1, },
 };
 
 void node_event_callback(Node* node, Node* input, Engine* e) {
@@ -186,7 +196,7 @@ void node_event_equals(Node* self, Node* input, Engine* e) {
     return;
   }
   if (input) {
-  u16 reads = node_increment_reads(self);
+    u16 reads = node_increment_reads(self);
     if (reads == 1) {
       self->data.value = input->data.value;
     }
@@ -196,6 +206,82 @@ void node_event_equals(Node* self, Node* input, Engine* e) {
     }
     else {
       assert(0);
+    }
+  }
+  node_finalize(self);
+}
+
+void node_event_copy_lr(Node* self, Node* input, Engine* e) {
+  if (!node_safe_guard(self)) {
+    return;
+  }
+  if (input) {
+    Node* in = node_get_alive_neighbour(e, self, -1, 0);
+    Node* out = node_get_alive_neighbour(e, self, 1, 0);
+    if (in == input) {
+      node_increment_reads(self);
+      self->data.value = input->data.value;
+      if (out) {
+        node_increment_writes(self);
+        node_event_callback(out, self, e);
+      }
+    }
+  }
+  node_finalize(self);
+}
+
+void node_event_copy_rl(Node* self, Node* input, Engine* e) {
+  if (!node_safe_guard(self)) {
+    return;
+  }
+  if (input) {
+    Node* in = node_get_alive_neighbour(e, self, 1, 0);
+    Node* out = node_get_alive_neighbour(e, self, -1, 0);
+    if (in == input) {
+      node_increment_reads(self);
+      self->data.value = input->data.value;
+      if (out) {
+        node_increment_writes(self);
+        node_event_callback(out, self, e);
+      }
+    }
+  }
+  node_finalize(self);
+}
+
+void node_event_copy_ud(Node* self, Node* input, Engine* e) {
+  if (!node_safe_guard(self)) {
+    return;
+  }
+  if (input) {
+    Node* in = node_get_alive_neighbour(e, self, 0, -1);
+    Node* out = node_get_alive_neighbour(e, self, 0, 1);
+    if (in == input) {
+      node_increment_reads(self);
+      self->data.value = input->data.value;
+      if (out) {
+        node_increment_writes(self);
+        node_event_callback(out, self, e);
+      }
+    }
+  }
+  node_finalize(self);
+}
+
+void node_event_copy_du(Node* self, Node* input, Engine* e) {
+  if (!node_safe_guard(self)) {
+    return;
+  }
+  if (input) {
+    Node* in = node_get_alive_neighbour(e, self, 0, 1);
+    Node* out = node_get_alive_neighbour(e, self, 0, -1);
+    if (in == input) {
+      node_increment_reads(self);
+      self->data.value = input->data.value;
+      if (out) {
+        node_increment_writes(self);
+        node_event_callback(out, self, e);
+      }
     }
   }
   node_finalize(self);
@@ -217,9 +303,17 @@ Node* node_from_grid_pos(Engine* e, u32 x, u32 y) {
 
 Result id_to_grid_pos(Node* node, u32* x, u32* y) {
   Result result = Ok;
-  *x = node->id % NODE_GRID_WIDTH;
-  *y = node->id / NODE_GRID_WIDTH;
+  if (x) {
+    *x = node->id % NODE_GRID_WIDTH;
+  }
+  if (y) {
+    *y = node->id / NODE_GRID_WIDTH;
+  }
   return result;
+}
+
+Result node_to_grid_pos(Node* node, u32* x, u32* y) {
+  return id_to_grid_pos(node, x, y);
 }
 
 void node_get_alive_neighbours(Engine* e, Node* node, Node* neighbours[MAX_NEIGHBOUR], u32* count) {
@@ -266,6 +360,20 @@ void node_get_alive_neighbours(Engine* e, Node* node, Node* neighbours[MAX_NEIGH
       }
     }
   }
+}
+
+Node* node_get_alive_neighbour(Engine* e, Node* node, i32 delta_x, i32 delta_y) {
+  Node* result = NULL;
+  u32 x = 0;
+  u32 y = 0;
+  node_to_grid_pos(node, &x, &y);
+  Node* n = node_from_grid_pos(e, x + delta_x, y + delta_y);
+  if (n) {
+    if (n->alive) {
+      result = n;
+    }
+  }
+  return result;
 }
 
 void node_copy(Node* dest, Node* src) {

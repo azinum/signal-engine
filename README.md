@@ -14,3 +14,7 @@
 | NOT         | Logical NOT operation on one input and broadcast                                 | 1      | 0-4    |
 | COPY        | Copy the input into the output(s)                                                | 1      | 0-4    |
 | EQUALS      | Compare equality of two inputs and broadcast the result                          | 2      | 0-4    |
+| COPY\_LR    | Copy input from left to right                                                    | 1      | 1      |
+| COPY\_RL    | Copy input from right to left                                                    | 1      | 1      |
+| COPY\_UD    | Copy input from up to down                                                       | 1      | 1      |
+| COPY\_DU    | Copy input from down to up                                                       | 1      | 1      |
