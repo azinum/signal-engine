@@ -28,7 +28,7 @@ static void node_event_callback(Node* node, Node* input, Engine* e);
 static void node_event_none(Node* self, Node* input, Engine* e);
 static void node_event_clock(Node* self, Node* input, Engine* e);
 static void node_event_add(Node* self, Node* input, Engine* e);
-static void node_event_io(Node* self, Node* input, Engine* e);
+static void node_event_bus(Node* self, Node* input, Engine* e);
 static void node_event_and(Node* self, Node* input, Engine* e);
 static void node_event_print(Node* self, Node* input, Engine* e);
 static void node_event_incr(Node* self, Node* input, Engine* e);
@@ -46,7 +46,7 @@ static Node_event node_events[MAX_NODE_TYPE] = {
   [NODE_NONE]    = { .event = node_event_none,    .broadcast = NULL, .reads = 0, },
   [NODE_CLOCK]   = { .event = node_event_clock,   .broadcast = NULL, .reads = 0, },
   [NODE_ADD]     = { .event = node_event_add,     .broadcast = NULL, .reads = 2, },
-  [NODE_IO]      = { .event = node_event_io,      .broadcast = NULL, .reads = 1, },
+  [NODE_BUS]     = { .event = node_event_bus,     .broadcast = NULL, .reads = 1, },
   [NODE_AND]     = { .event = node_event_and,     .broadcast = NULL, .reads = 2, },
   [NODE_PRINT]   = { .event = node_event_print,   .broadcast = NULL, .reads = 1, },
   [NODE_INCR]    = { .event = node_event_incr,    .broadcast = NULL, .reads = 1, },
@@ -110,13 +110,12 @@ void node_event_add(Node* self, Node* input, Engine* e) {
   node_finalize(self);
 }
 
-void node_event_io(Node* self, Node* input, Engine* e) {
+void node_event_bus(Node* self, Node* input, Engine* e) {
   if (!node_safe_guard(self)) {
     return;
   }
   if (input) {
     node_increment_reads(self);
-    self->data = input->data;
   }
   node_broadcast(self, input, e);
   node_finalize(self);

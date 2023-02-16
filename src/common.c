@@ -35,37 +35,37 @@ u32 buffer_iterate(void* restrict dest, Buffer* source, u32 size, u32* iter) {
 }
 
 Result file_read(const char* path, Buffer* buffer) {
-	Result result = Ok;
-	u32 num_bytes_read = 0;
+  Result result = Ok;
+  u32 num_bytes_read = 0;
   buffer_init(buffer);
 
-	FILE* fp = fopen(path, "rb");
-	if (!fp) {
-		log_error("file_read: file `%s` does not exist.\n", path);
+  FILE* fp = fopen(path, "rb");
+  if (!fp) {
+    log_error("file_read: file `%s` does not exist.\n", path);
     return_defer(Err);
-	}
+  }
 
-	fseek(fp, 0, SEEK_END);
-	u32 size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-	buffer->data = malloc(size * sizeof(u8));
-	buffer->size = size;
-	if (!buffer->data) {
-		buffer->size = 0;
+  fseek(fp, 0, SEEK_END);
+  u32 size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  buffer->data = malloc(size * sizeof(u8));
+  buffer->size = size;
+  if (!buffer->data) {
+    buffer->size = 0;
     return_defer(Err);
-	}
+  }
 
-	num_bytes_read = fread(buffer->data, 1, size, fp);
-	if (num_bytes_read != size) {
-		log_error("file_read: failed to read file `%s`.\n", path);
+  num_bytes_read = fread(buffer->data, 1, size, fp);
+  if (num_bytes_read != size) {
+    log_error("file_read: failed to read file `%s`.\n", path);
     return_defer(Err);
-	}
+  }
 
 defer:
   if (fp) {
-	  fclose(fp);
+    fclose(fp);
   }
-	return result;
+  return result;
 }
 
 Result file_write(const char* path, Buffer* buffer) {

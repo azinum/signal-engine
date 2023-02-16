@@ -64,8 +64,8 @@ extern u32 key_mod_ctrl;
 
 extern i32 mouse_x;
 extern i32 mouse_y;
-extern u8 mouse_down[];
-extern u8 mouse_pressed[];
+extern u8 mouse_down[MAX_MOUSE_BUTTON];
+extern u8 mouse_pressed[MAX_MOUSE_BUTTON];
 extern i32 mouse_scroll_x;
 extern i32 mouse_scroll_y;
 

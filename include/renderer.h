@@ -26,7 +26,7 @@ typedef enum {
   SPRITE_NODE_NONE = 0,
   SPRITE_NODE_CLOCK,
   SPRITE_NODE_ADD,
-  SPRITE_NODE_IO,
+  SPRITE_NODE_BUS,
   SPRITE_NODE_AND,
   SPRITE_NODE_PRINT,
   SPRITE_NODE_INCR,
@@ -43,7 +43,7 @@ typedef enum {
 
 Result renderer_init(u32 width, u32 height);
 
-void renderer_begin_frame();
+void renderer_begin_frame(u32 background_color);
 
 void render_rect(i32 x, i32 y, i32 w, i32 h, u32 thickness, u32 color);
 

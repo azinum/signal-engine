@@ -24,7 +24,7 @@ static const Sprite sprites[MAX_SPRITE] = {
   [SPRITE_NODE_NONE]    = { .pixels = node_none_pixels, .width = node_none_width, .height = node_none_height, },
   [SPRITE_NODE_CLOCK]   = { .pixels = node_clock_pixels, .width = node_clock_width, .height = node_clock_height, },
   [SPRITE_NODE_ADD]     = { .pixels = node_add_pixels, .width = node_add_width, .height = node_add_height, },
-  [SPRITE_NODE_IO]      = { .pixels = node_io_pixels, .width = node_io_width, .height = node_io_height, },
+  [SPRITE_NODE_BUS]     = { .pixels = node_bus_pixels, .width = node_bus_width, .height = node_bus_height, },
   [SPRITE_NODE_AND]     = { .pixels = node_and_pixels, .width = node_and_width, .height = node_and_height, },
   [SPRITE_NODE_PRINT]   = { .pixels = node_print_pixels, .width = node_print_width, .height = node_print_height, },
   [SPRITE_NODE_INCR]    = { .pixels = node_incr_pixels, .width = node_incr_width, .height = node_incr_height, },
