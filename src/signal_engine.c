@@ -45,12 +45,27 @@ void signal_engine_init(Engine* e) {
 i32 signal_engine_start(i32 argc, char** argv) {
   i32 result = EXIT_SUCCESS;
 
+  struct {
+    char* state_path;
+  } options = {
+    .state_path = "save.state",
+  };
+  arg_parser_init(true, 4, 4);
+
+  Parse_arg args[] = {
+    {0, NULL, "path to state file to save/load to", ArgString, 0, &options.state_path},
+  };
+
+  if (parse_args(args, LENGTH(args), (u32)argc, argv) != ArgParseOk) {
+    return_defer(EXIT_FAILURE);
+  }
+
   Engine engine;
   signal_engine_init(&engine);
   State* state = &engine.state;
 
   signal_state_init(state);
-  signal_engine_state_load(STATE_PATH, &engine);
+  signal_engine_state_load(options.state_path, &engine);
 
   const f32 DT_MAX = 0.5f;
   char title[MAX_TITLE_LENGTH] = {0};
@@ -75,10 +90,10 @@ i32 signal_engine_start(i32 argc, char** argv) {
           signal_state_init(state);
         }
         if (key_pressed[KEY_S]) {
-          signal_engine_state_store(STATE_PATH, &engine);
+          signal_engine_state_store(options.state_path, &engine);
         }
         if (key_pressed[KEY_R]) {
-          signal_engine_state_load(STATE_PATH, &engine);
+          signal_engine_state_load(options.state_path, &engine);
         }
       }
       else {
@@ -137,6 +152,7 @@ i32 signal_engine_start(i32 argc, char** argv) {
     }
     platform_destroy();
   }
+defer:
   return result;
 }
 

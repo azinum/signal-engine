@@ -18,8 +18,6 @@
 #define DEFAULT_PADDING 2
 #define DEFAULT_GLYPH_SIZE 2
 
-#define STATE_PATH "state.bin"
-
 #define LOG_ENTRY_LENGTH 64
 #define MAX_LOG_ENTRY 16
 

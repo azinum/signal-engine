@@ -1,6 +1,6 @@
 *.swo
 *.swp
-*.bin
+*.state
 .DS_Store
 png2c
 signal_engine
