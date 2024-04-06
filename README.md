@@ -18,3 +18,21 @@
 | COPY\_RL    | Copy input from right to left                                                    | 1      | 1      |
 | COPY\_UD    | Copy input from up to down                                                       | 1      | 1      |
 | COPY\_DU    | Copy input from down to up                                                       | 1      | 1      |
+
+## Controls
+
+| Key                      | Description                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| WASD                     | Move camera                                                                      |
+| LMB                      | Set the value of a node to 1 and trigger a broadcast to neighbours               |
+| Mouse wheel              | Change node type                                                                 |
+| Control + Mouse wheel    | Increment or decrement data of a hovered node                                    |
+| Control + X              | Cut node                                                                         |
+| Control + C              | Copy node                                                                        |
+| Control + V              | Paste node                                                                       |
+| Control + S              | Save engine state to file                                                        |
+| Control + R              | Reload engine state from file                                                    |
+| L                        | Open/close logger                                                                |
+| Spacebar                 | Play/pause engine                                                                |
+| 1                        | Decrease engine tick rate                                                        |
+| 2                        | Increase engine tick rate                                                        |
