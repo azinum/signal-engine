@@ -3,6 +3,8 @@
 #ifndef _SIGNAL_ENGINE_H
 #define _SIGNAL_ENGINE_H
 
+#include <time.h>
+
 #include "common.h"
 #include "math_util.h"
 #include "assets.h"
@@ -20,6 +22,14 @@
 
 #define LOG_ENTRY_LENGTH 64
 #define MAX_LOG_ENTRY 16
+
+#define TIMER_START(...) \
+  struct timespec _end = {0}; \
+  struct timespec _start = {0}; \
+  clock_gettime(CLOCK_REALTIME, &_start); \
+  __VA_ARGS__
+
+#define TIMER_END() (clock_gettime(CLOCK_REALTIME, &_end), ((((_end.tv_sec - _start.tv_sec) * 1000000000.0f) + _end.tv_nsec) - (_start.tv_nsec)) / 1000000000.0f)
 
 extern char log_entries[MAX_LOG_ENTRY][LOG_ENTRY_LENGTH];
 extern u32 log_entry_count;

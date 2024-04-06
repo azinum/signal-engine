@@ -201,7 +201,9 @@ void node_event_equals(Node* self, Node* input, Engine* e) {
     }
     else if (reads == 2) {
       self->data.value = self->data.value == input->data.value;
-      node_broadcast(self, input, e);
+      if (self->data.value != 0) {
+        node_broadcast(self, input, e);
+      }
     }
     else {
       assert(0);
@@ -500,30 +502,7 @@ void nodes_update_and_render(Engine* e) {
     Node* node = &e->state.nodes[i];
     if (inside_box(&node->box, mouse_x + camera->x, mouse_y + camera->y)) {
       if (mouse_pressed[MOUSE_BUTTON_RIGHT]) {
-        node_clear(node);
-        node->alive = false;
         continue;
-      }
-      if (mouse_scroll_y > 0) {
-        node_reset(node);
-        node->type = (node->type + 1) % MAX_NODE_TYPE;
-        continue;
-      }
-      else if (mouse_scroll_y < 0) {
-        node_reset(node);
-        if (node->type == 0) {
-          node->type = MAX_NODE_TYPE - 1;
-        }
-        else {
-          node->type -= 1;
-        }
-        continue;
-      }
-      if (key_pressed[KEY_V] && key_mod_ctrl) {
-        if (copy) {
-          node_copy(node, copy);
-          signal_engine_log(e, "info", "pasted node %u", copy->id);
-        }
       }
       hover = node;
     }
@@ -560,6 +539,33 @@ void nodes_update_and_render(Engine* e) {
         node_clear(hover);
         hover->alive = false;
         signal_engine_log(e, "info", "cut node %u", hover->id);
+      }
+      if (key_pressed[KEY_V]) {
+        if (copy) {
+          node_copy(hover, copy);
+          signal_engine_log(e, "info", "pasted node %u", copy->id);
+        }
+      }
+      if (mouse_scroll_y > 0) {
+        hover->data.value += 1;
+      }
+      else if (mouse_scroll_y < 0) {
+        hover->data.value -= 1;
+      }
+    }
+    else {
+      if (mouse_scroll_y > 0) {
+        node_reset(hover);
+        hover->type = (hover->type + 1) % MAX_NODE_TYPE;
+      }
+      else if (mouse_scroll_y < 0) {
+        node_reset(hover);
+        if (hover->type == 0) {
+          hover->type = MAX_NODE_TYPE - 1;
+        }
+        else {
+          hover->type -= 1;
+        }
       }
     }
   }

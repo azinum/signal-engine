@@ -69,15 +69,9 @@ i32 signal_engine_start(i32 argc, char** argv) {
 
   const f32 DT_MAX = 0.5f;
   char title[MAX_TITLE_LENGTH] = {0};
-
   if (platform_window_create("", 800, 600, false) == Ok) {
-    u32 prev = platform_get_ticks();
-    u32 current = prev;
-
     while (platform_pollevents() == Ok) {
-      current = platform_get_ticks();
-      state->dt = (current - prev) * 0.001f;
-      prev = current;
+      TIMER_START();
       if (state->dt > DT_MAX) {
         state->dt = DT_MAX;
       }
@@ -149,6 +143,7 @@ i32 signal_engine_start(i32 argc, char** argv) {
       nodes_update_and_render(&engine);
       platform_window_render();
       state->tick++;
+      state->dt = TIMER_END();
     }
     platform_destroy();
   }
